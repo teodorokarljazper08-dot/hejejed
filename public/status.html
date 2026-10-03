@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARL — Platform Status</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080808;--surface:#101010;--border:#1e1e1e;--white:#f5f5f5;--muted:#606060;--green:#22c55e;--red:#ef4444;--yellow:#eab308}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;font-weight:300;min-height:100vh}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid var(--border);position:relative;z-index:1;background:var(--bg)}
+.logo{font-size:.95rem;font-weight:600;letter-spacing:.5px}
+.nav-link{font-size:.72rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .15s}
+.nav-link:hover{color:var(--white)}
+.wrap{max-width:760px;margin:0 auto;padding:60px 24px;position:relative;z-index:1}
+.page-title{font-size:2rem;font-weight:600;letter-spacing:-1px;margin-bottom:6px}
+.page-sub{font-size:.82rem;color:var(--muted);margin-bottom:48px}
+.overall{display:flex;align-items:center;gap:12px;padding:20px 24px;border:1px solid var(--border);margin-bottom:32px}
+.overall-pip{width:10px;height:10px;border-radius:50%;background:var(--green)}
+.overall-pip.degraded{background:var(--yellow)}
+.overall-pip.down{background:var(--red)}
+.overall-text{font-size:.85rem;font-weight:500}
+.overall-sub{font-size:.72rem;color:var(--muted);margin-left:auto}
+.section-label{font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.bot-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.bot-row:last-child{border-bottom:none}
+.bot-pip{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.bot-pip.running{background:var(--green)}
+.bot-pip.stopped,bot-pip.error{background:var(--red)}
+.bot-pip.restarting{background:var(--yellow)}
+.bot-name{font-size:.82rem;font-weight:500;flex:1}
+.bot-uptime{font-size:.72rem;color:var(--muted)}
+.bot-status{font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase}
+.bot-status.running{color:var(--green)}
+.bot-status.stopped,.bot-status.error{color:#fca5a5}
+.bot-status.restarting{color:var(--yellow)}
+.empty{padding:40px 0;color:var(--muted);font-size:.82rem}
+.refreshed{font-size:.68rem;color:var(--muted);margin-top:32px}
+</style>
+</head>
+<body>
+<canvas id="dash-bg" style="position:fixed;inset:0;opacity:.55;pointer-events:none;z-index:0"></canvas>
+<nav class="nav">
+  <a href="/" class="logo">KARL</a>
+  <a href="/dashboard" class="nav-link">Dashboard</a>
+</nav>
+<div class="wrap">
+  <div class="page-title">Platform Status</div>
+  <div class="page-sub">Current status of all hosted bots on KARL.</div>
+  <div class="overall" id="overall">
+    <div class="overall-pip" id="overall-pip"></div>
+    <div class="overall-text" id="overall-text">Loading...</div>
+    <div class="overall-sub" id="overall-sub"></div>
+  </div>
+  <div class="section-label">Hosted Bots</div>
+  <div id="bots-list"></div>
+  <div class="refreshed" id="refreshed"></div>
+</div>
+<script>
+function fmtUptime(ms) {
+  if (!ms) return '—';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function load() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const bots = d.bots || [];
+    const running = bots.filter(b => b.status === 'running').length;
+    const pip = document.getElementById('overall-pip');
+    const txt = document.getElementById('overall-text');
+    const sub = document.getElementById('overall-sub');
+    if (bots.length === 0 || running === bots.length) {
+      pip.className = 'overall-pip'; txt.textContent = 'All systems operational';
+    } else if (running > 0) {
+      pip.className = 'overall-pip degraded'; txt.textContent = 'Partial outage';
+    } else {
+      pip.className = 'overall-pip down'; txt.textContent = 'Service disruption';
+    }
+    sub.textContent = `${running} / ${bots.length} bots running`;
+    const list = document.getElementById('bots-list');
+    if (!bots.length) { list.innerHTML = '<div class="empty">No bots are currently hosted.</div>'; return; }
+    list.innerHTML = bots.map(b => {
+      const upMs = b.uptime_start ? Date.now() - b.uptime_start : null;
+      return `<div class="bot-row">
+        <div class="bot-pip ${b.status}"></div>
+        <div class="bot-name">${esc(b.name)}</div>
+        ${upMs ? `<div class="bot-uptime">up ${fmtUptime(upMs)}</div>` : ''}
+        <div class="bot-status ${b.status}">${b.status}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('refreshed').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+  } catch(e) {
+    document.getElementById('overall-text').textContent = 'Could not load status.';
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+<script src="/assets/tech-bg.js"></script>
+<script>
+(function () {
+  try {
+    const el = document.getElementById('dash-bg');
+    if (window.TechBackdrop && el) new TechBackdrop(el, { density: 'ambient' });
+  } catch (err) {
+    console.warn('[KARL] Background animation failed to start:', err);
+  }
+})();
+</script>
+</body>
+</html>

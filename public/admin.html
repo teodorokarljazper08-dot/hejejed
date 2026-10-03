@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARL — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090f;--surface:#0d1120;--surface2:#131829;--border:#1c2238;--border2:#252d45;
+  --white:#eef0f7;--off-white:#c8cce0;--muted:#5a6285;--muted2:#2e3554;--accent:#f5a623;--accent-dim:rgba(245,166,35,0.1);
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;--orange:#f97316;
+  --sidebar:210px;
+  --font-body:300;--font-ui:400;--font-label:500;--font-strong:600
+}
+html[data-theme="light"]{
+  --bg:#f7f7f8;--surface:#ffffff;--surface2:#f0f0f1;--border:#e3e3e5;--border2:#d4d4d7;
+  --white:#16161a;--off-white:#2a2a2e;--muted:#7a7a82;--muted2:#a8a8b0;
+}
+html[data-theme="light"] .topbar{background:rgba(247,247,248,.96)}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;font-weight:var(--font-body);min-height:100vh;display:flex}
+a{text-decoration:none;color:inherit}
+
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50}
+.sidebar-logo{padding:18px 18px 16px;border-bottom:1px solid var(--border);font-size:.95rem;font-weight:var(--font-strong);letter-spacing:.5px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:.6rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;color:var(--muted);font-size:.8rem;font-weight:var(--font-ui);cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{color:var(--white);background:var(--surface2)}
+.nav-item.active{color:var(--white);background:var(--surface2);border-color:var(--border2)}
+.nav-item-icon{font-size:.75rem;width:14px;text-align:center;flex-shrink:0;opacity:.6}
+.sidebar-bottom{margin-top:auto;padding:14px 10px;border-top:1px solid var(--border)}
+.user-chip{padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;margin-bottom:8px}
+.user-name{font-size:.8rem;font-weight:var(--font-label);margin-bottom:2px}
+.user-plan{font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:var(--font-ui)}
+.user-plan.premium{color:var(--white)}
+.btn-logout{width:100%;padding:7px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:.7rem;font-weight:var(--font-label);letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .15s;border-radius:3px}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+.main{margin-left:var(--sidebar);flex:1;position:relative;z-index:1}
+.topbar{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:40;background:rgba(8,8,8,.96);backdrop-filter:blur(8px)}
+.topbar-title{font-size:.7rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.theme-toggle{width:30px;height:30px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--white);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.theme-toggle:hover{border-color:var(--muted)}
+.content{padding:28px 24px}
+.page{display:none}.page.active{display:block}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:28px}
+.stat-cell{background:var(--bg);padding:20px 22px}
+.stat-value{font-size:1.75rem;font-weight:var(--font-strong);letter-spacing:-1px;line-height:1;margin-bottom:4px}
+.stat-label{font-size:.6rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.section-heading{font-size:.65rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.btn-sm{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:3px;font-size:.65rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-sm-white{background:var(--white);color:var(--bg)}
+.btn-sm-white:hover{background:var(--off-white)}
+.btn-sm-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}
+.btn-sm-outline:hover{border-color:var(--white);color:var(--white)}
+.btn-sm-outline.active{border-color:var(--white);color:var(--white)}
+
+.data-table{width:100%;border-collapse:collapse;border:1px solid var(--border);background:var(--bg)}
+.data-table th{padding:10px 14px;font-size:.6rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);background:var(--surface)}
+.data-table td{padding:11px 14px;font-size:.78rem;font-weight:var(--font-ui);color:var(--white);border-bottom:1px solid var(--border)}
+.data-table tr.clickable{cursor:pointer}
+.data-table tr.clickable:hover td{background:var(--surface)}
+.cell-muted{color:var(--muted)!important}
+.cell-mono{font-family:'Courier New',monospace;font-size:.72rem}
+
+.plan-tag{font-size:.6rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border2);color:var(--muted);display:inline-block}
+.plan-tag.premium{color:var(--white);border-color:rgba(245,245,245,.2)}
+
+.status-pip{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-pip.running{background:var(--green)}
+.status-pip.stopped{background:var(--muted2)}
+.status-pip.error{background:var(--red)}
+.status-pip.restarting{background:var(--yellow)}
+.status-pip.starting{background:var(--blue)}
+
+.empty-state{background:var(--surface);border:1px solid var(--border);padding:48px 40px;text-align:center;color:var(--muted);font-size:.8rem}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border2);max-width:640px;width:100%;max-height:85vh;overflow-y:auto;border-radius:4px}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:1.1rem;font-weight:var(--font-strong);letter-spacing:-.3px;margin-bottom:4px}
+.modal-sub{font-size:.75rem;color:var(--muted);font-weight:var(--font-ui)}
+.modal-close{background:transparent;border:1px solid var(--border2);color:var(--muted);width:26px;height:26px;border-radius:4px;cursor:pointer;font-size:.9rem;flex-shrink:0}
+.modal-close:hover{color:var(--white);border-color:var(--white)}
+.modal-body{padding:20px 22px}
+.modal-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.modal-info-cell{background:var(--bg);border:1px solid var(--border);padding:12px 14px}
+.modal-info-label{font-size:.58rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.modal-info-value{font-size:.85rem;font-weight:var(--font-label);word-break:break-all}
+
+.bot-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);margin-bottom:1px}
+.bot-row-left{display:flex;align-items:center;gap:10px;min-width:0}
+.bot-row-name{font-size:.82rem;font-weight:var(--font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bot-row-meta{font-size:.65rem;color:var(--muted);letter-spacing:.5px}
+.bot-row-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bot-row-uptime{font-size:.68rem;color:var(--muted);font-family:'Courier New',monospace}
+.btn-view-folder{padding:6px 12px;font-size:.62rem;font-weight:var(--font-label);letter-spacing:1px;text-transform:uppercase;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:3px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-view-folder:hover{border-color:var(--white);color:var(--white)}
+
+.filter-row{display:flex;gap:8px;align-items:center}
+select,input[type=text]{background:var(--surface2);border:1px solid var(--border2);color:var(--white);padding:7px 10px;border-radius:3px;font-family:inherit;font-size:.75rem;font-weight:var(--font-ui);outline:none}
+select:focus,input[type=text]:focus{border-color:var(--white)}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-left:2px solid var(--white);font-size:.75rem;font-weight:var(--font-ui);z-index:1000;transform:translateY(100px);opacity:0;transition:all .25s;max-width:280px;border-radius:3px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left-color:var(--green);color:#86efac}
+.toast.error{border-left-color:var(--red);color:#fca5a5}
+
+.hamburger-btn{display:none;width:30px;height:30px;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border2);color:var(--white);font-size:1rem;border-radius:3px;cursor:pointer;flex-shrink:0}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99}
+.sidebar-overlay.show{display:block}
+
+@media(max-width:768px){
+  .sidebar{display:flex;transform:translateX(-100%);transition:transform .22s ease;z-index:100}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .hamburger-btn{display:flex}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .modal-info-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="dash-bg" style="position:fixed;inset:0;opacity:.55;pointer-events:none;z-index:0"></canvas>
+
+<div class="sidebar">
+  <div class="sidebar-logo">KARL ADMIN</div>
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('users')"><span class="nav-item-icon">U</span> Users</div>
+    <div class="nav-item" onclick="showPage('banned')"><span class="nav-item-icon">⛔</span> Banned Users</div>
+    <div class="nav-item" onclick="showPage('activebots')"><span class="nav-item-icon">B</span> Active Bots</div>
+    <div class="nav-item" onclick="showPage('tokens')"><span class="nav-item-icon">🔑</span> Tokens</div>
+    <div class="nav-item" onclick="showPage('proxies')"><span class="nav-item-icon">⇄</span> Proxies</div>
+  </div>
+  <div class="nav-section" style="margin-top:6px">
+    <div class="nav-label">Other</div>
+    <div class="nav-item" onclick="window.location.href='/dashboard'"><span class="nav-item-icon">D</span> Back to Dashboard</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="user-name" id="sidebar-username">—</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sidebar-email"></div>
+      <div class="user-plan" id="sidebar-plan">free</div>
+    </div>
+    <form action="/api/auth/logout" method="POST"><button type="submit" class="btn-logout">Sign Out</button></form>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">=</button>
+      <div class="topbar-title" id="topbar-title">Users</div>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">D</button>
+  </div>
+
+  <div class="content">
+
+    <div class="page active" id="page-users">
+      <div class="stats-row">
+        <div class="stat-cell"><div class="stat-value" id="stat-users">0</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-cell"><div class="stat-value" id="stat-premium">0</div><div class="stat-label">Premium Users</div></div>
+        <div class="stat-cell"><div class="stat-value" id="stat-bots">0</div><div class="stat-label">Total Bots</div></div>
+        <div class="stat-cell"><div class="stat-value" style="color:var(--green)" id="stat-running">0</div><div class="stat-label">Bots Running</div></div>
+      </div>
+      <div class="section-head">
+        <div class="section-heading">All Users</div>
+        <div class="filter-row">
+          <input type="text" id="user-search" placeholder="Search username or email" oninput="renderUsers()">
+          <button class="btn-sm btn-sm-outline" onclick="loadUsers()">Refresh</button>
+        </div>
+      </div>
+      <div id="users-container"></div>
+    </div>
+
+    <div class="page" id="page-banned">
+      <div class="section-head">
+        <div class="section-heading">Banned Users</div>
+        <div class="filter-row">
+          <button class="btn-sm btn-sm-outline" onclick="loadBanned()">Refresh</button>
+        </div>
+      </div>
+      <div id="banned-container"></div>
+    </div>
+
+    <div class="page" id="page-activebots">
+      <div class="section-head">
+        <div class="section-heading">Active Bots</div>
+        <div class="filter-row">
+          <button class="btn-sm btn-sm-outline active" id="filter-all" onclick="setBotFilter('all')">All</button>
+          <button class="btn-sm btn-sm-outline" id="filter-running" onclick="setBotFilter('running')">Running</button>
+          <button class="btn-sm btn-sm-outline" onclick="loadActiveBots()">Refresh</button>
+        </div>
+      </div>
+      <div id="activebots-container"></div>
+    </div>
+
+    <div class="page" id="page-tokens">
+      <div class="section-head">
+        <div class="section-heading">Activation Tokens</div>
+        <div class="filter-row">
+          <button class="btn-sm btn-sm-outline" onclick="loadTokens()">Refresh</button>
+        </div>
+      </div>
+      <div id="tokens-content"></div>
+    </div>
+
+    <div class="page" id="page-proxies">
+      <div class="stats-row" id="proxy-stats-row">
+        <div class="stat-cell"><div class="stat-value" id="pstat-total">0</div><div class="stat-label">Total Stock</div></div>
+        <div class="stat-cell"><div class="stat-value" style="color:var(--green)" id="pstat-alive">0</div><div class="stat-label">Alive</div></div>
+        <div class="stat-cell"><div class="stat-value" id="pstat-unassigned">0</div><div class="stat-label">Unassigned</div></div>
+        <div class="stat-cell"><div class="stat-value" id="pstat-requests">0</div><div class="stat-label">Pending Requests</div></div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Add Proxies</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:24px">
+        <!-- File upload -->
+        <div style="margin-bottom:10px">
+          <label style="display:inline-block;padding:8px 14px;background:var(--bg);border:1px solid var(--border2);color:var(--muted);font-size:.65rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:3px" for="proxy-file-input">Upload .txt File</label>
+          <input type="file" id="proxy-file-input" accept=".txt" style="display:none" onchange="loadProxyFile(event)">
+          <span id="proxy-file-name" style="font-size:.7rem;color:var(--muted);margin-left:10px"></span>
+        </div>
+        <!-- Textarea — fixed height, no expansion -->
+        <textarea id="proxy-bulk-text" placeholder="host:port:user:pass (one per line)" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:10px 12px;font-family:'Courier New',monospace;font-size:.72rem;resize:none;height:110px;outline:none;border-radius:3px;margin-bottom:10px;overflow-y:auto"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <select id="proxy-bulk-assign" style="flex:1;min-width:180px">
+            <option value="">Shared pool (anyone can use, up to plan limit)</option>
+          </select>
+          <button class="btn-sm btn-sm-white" onclick="bulkAddProxies()">Add to Stock</button>
+        </div>
+        <!-- Auto-check toggle -->
+        <div style="display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:.65rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Auto-check proxies</div>
+          <div id="auto-check-toggle" onclick="toggleAutoCheck()" style="width:36px;height:20px;background:var(--border2);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+            <div id="auto-check-knob" style="width:16px;height:16px;background:var(--muted);border-radius:50%;position:absolute;top:2px;left:2px;transition:all .2s"></div>
+          </div>
+          <div id="auto-check-label" style="font-size:.7rem;color:var(--muted)">Off</div>
+          <div style="margin-left:auto;font-size:.68rem;color:var(--muted)" id="last-check-time"></div>
+        </div>
+        <!-- Dashboard live refresh indicator -->
+        <div style="display:flex;align-items:center;gap:8px;padding-top:10px;margin-top:6px">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--green)" id="live-dot"></div>
+          <div style="font-size:.65rem;color:var(--muted)" id="live-label">Dashboard stats refresh every 1s</div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Assign Existing Stock To A User</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:24px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="proxy-assign-user" style="min-width:200px"></select>
+        <input type="text" id="proxy-assign-count" placeholder="Count" style="width:90px" inputmode="numeric">
+        <button class="btn-sm btn-sm-white" onclick="assignProxiesToUser()">Assign From Unassigned Pool</button>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Pending Requests</div>
+      </div>
+      <div id="proxy-requests-container" style="margin-bottom:24px"></div>
+
+      <div class="section-head">
+        <div class="section-heading">Stock</div>
+        <div class="filter-row">
+          <select id="proxy-filter" onchange="loadProxyList()">
+            <option value="all">All</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="assigned">Assigned</option>
+            <option value="dead">Dead</option>
+          </select>
+          <input type="text" id="proxy-search" placeholder="Search host" oninput="loadProxyList()">
+          <button class="btn-sm btn-sm-outline" onclick="clearDeadProxies()">Clear Dead</button>
+          <button class="btn-sm btn-sm-outline" onclick="loadProxyAdmin()">Refresh</button>
+        </div>
+      </div>
+      <div id="proxy-list-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modal-username">—</div>
+        <div class="modal-sub" id="modal-email">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-grid">
+        <div class="modal-info-cell">
+          <div class="modal-info-label">Plan</div>
+          <div class="modal-info-value" id="modal-plan">—</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">Joined</div>
+          <div class="modal-info-value" id="modal-joined">—</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">Telegram</div>
+          <div class="modal-info-value" id="modal-telegram">—</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">Status</div>
+          <div class="modal-info-value" id="modal-status">—</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">Referrals Made</div>
+          <div class="modal-info-value" id="modal-referrals">—</div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Membership Time</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <select id="plan-preset" style="min-width:220px"></select>
+        <button class="btn-sm btn-sm-white" id="modal-plan-btn" onclick="applyPlan(0)">Apply Plan</button>
+        <button class="btn-sm btn-sm-outline" style="border-color:rgba(239,68,68,.3);color:#fca5a5" onclick="removePlan(0)">Remove Plan</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:.62rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase">or custom</span>
+        <input type="text" id="time-amount" placeholder="Amount" style="width:90px" inputmode="numeric">
+        <select id="time-unit">
+          <option value="second">Seconds</option>
+          <option value="minute">Minutes</option>
+          <option value="hour">Hours</option>
+          <option value="day" selected>Days</option>
+          <option value="month">Months</option>
+          <option value="year">Years</option>
+        </select>
+        <select id="time-direction">
+          <option value="add">Add</option>
+          <option value="reduce">Reduce</option>
+        </select>
+        <button class="btn-sm btn-sm-white" id="modal-time-btn" onclick="adjustTime(0)">Apply</button>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Billing History</div>
+      </div>
+      <div id="modal-billing-history" style="margin-bottom:22px"></div>
+
+      <div class="section-head">
+        <div class="section-heading">Account Actions</div>
+      </div>
+      <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap" id="modal-ban-actions"></div>
+      <div style="margin-bottom:12px">
+        <button class="btn-sm btn-sm-outline" id="modal-reset-tg-btn" onclick="resetTelegramLink()">Reset Telegram Link</button>
+        <span class="cell-muted" style="font-size:.68rem;margin-left:6px">Clears their token so /start behaves like a brand-new user (for testing or relinking).</span>
+      </div>
+      <div id="modal-ban-history" style="margin-bottom:22px"></div>
+
+      <div class="section-head">
+        <div class="section-heading" id="modal-bots-heading">Bots</div>
+        <div class="filter-row">
+          <select id="modal-bot-select" onchange="onModalBotSelect()">
+            <option value="all">All bots</option>
+          </select>
+        </div>
+      </div>
+      <div id="modal-bots-container"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function getThemeCookie(){const m=document.cookie.match(/(?:^|; )karl_theme=([^;]+)/);return m?m[1]:null;}
+function setThemeCookie(v){document.cookie=`karl_theme=${v}; max-age=31536000; path=/`;}
+function applyTheme(theme){document.documentElement.setAttribute('data-theme',theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='light'?'L':'D';}
+function toggleTheme(){const next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';applyTheme(next);setThemeCookie(next);}
+applyTheme(getThemeCookie()||'dark');
+
+let allUsers = [];
+let allActiveBots = [];
+let botFilter = 'all';
+let currentModalUser = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/me');
+    const d = await r.json();
+    if (!d.success) return window.location.href = '/login';
+    if (!d.user.is_admin) return window.location.href = '/dashboard';
+    document.getElementById('sidebar-username').textContent = d.user.username;
+    if (d.user.email) document.getElementById('sidebar-email').textContent = d.user.email;
+    document.getElementById('sidebar-plan').textContent = d.user.plan;
+    document.getElementById('sidebar-plan').className = 'user-plan ' + d.user.plan;
+    await loadUsers();
+  } catch (e) {
+    window.location.href = '/login';
+  }
+}
+
+async function loadUsers() {
+  try {
+    const r = await fetch('/api/admin/users');
+    const d = await r.json();
+    if (!d.success) return toast(d.message || 'Failed to load users', 'error');
+    allUsers = d.users;
+    const totalBots = allUsers.reduce((sum, u) => sum + u.bot_count, 0);
+    document.getElementById('stat-users').textContent = allUsers.length;
+    document.getElementById('stat-premium').textContent = allUsers.filter(u => u.plan === 'premium').length;
+    document.getElementById('stat-bots').textContent = totalBots;
+    const br = await fetch('/api/admin/bots');
+    const bd = await br.json();
+    if (bd.success) document.getElementById('stat-running').textContent = bd.bots.filter(b => b.live).length;
+    // Extended stats
+    try {
+      const sr = await fetch('/api/admin/stats');
+      const sd = await sr.json();
+      if (sd.success) {
+        document.getElementById('stat-banned').textContent = sd.stats.bannedUsers;
+        document.getElementById('stat-new-today').textContent = sd.stats.newUsersToday;
+        document.getElementById('stat-new-week').textContent = sd.stats.newUsersWeek;
+      }
+    } catch {}
+    loadAnnouncementsList();
+    renderUsers();
+  } catch (e) {
+    toast('Failed to load users', 'error');
+  }
+}
+
+function renderUsers() {
+  const q = document.getElementById('user-search').value.trim().toLowerCase();
+  const filtered = !q ? allUsers : allUsers.filter(u =>
+    (u.username || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)
+  );
+  const c = document.getElementById('users-container');
+  if (!filtered.length) {
+    c.innerHTML = '<div class="empty-state">No users match.</div>';
+    return;
+  }
+  c.innerHTML = `<table class="data-table">
+    <thead><tr><th>Username</th><th>Email</th><th>Telegram</th><th>Plan</th><th>Status</th><th>Bots</th><th>Referrals</th><th>Joined</th></tr></thead>
+    <tbody>
+      ${filtered.map(u => `
+        <tr class="clickable" onclick="openUser(${u.id})">
+          <td>${esc(u.username)}</td>
+          <td class="cell-muted">${esc(u.email || '—')}</td>
+          <td class="cell-muted">${u.telegram_username ? '@' + esc(u.telegram_username) : (u.telegram_id ? esc(u.telegram_id) : '—')}</td>
+          <td><span class="plan-tag ${u.plan === 'premium' ? 'premium' : ''}">${esc(u.plan)}${u.plan === 'premium' && u.premium_expires_at ? ' · ' + fmtTimeLeft(u.premium_expires_at) : ''}</span></td>
+          <td>${u.banned ? '<span style="color:#fca5a5">Banned</span>' : '<span style="color:#86efac">Active</span>'}</td>
+          <td>${u.bot_count}</td>
+          <td>${u.referral_count || 0}${u.referral_count ? ' <span class="cell-muted">(+' + u.referral_count + 'd)</span>' : ''}</td>
+          <td class="cell-muted">${fmtDate(u.created_at)}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>`;
+}
+
+function fmtTimeLeft(iso) {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'expired';
+  const days = Math.floor(ms / 86400000);
+  if (days >= 1) return `${days}d left`;
+  const hours = Math.floor(ms / 3600000);
+  if (hours >= 1) return `${hours}h left`;
+  return `${Math.floor(ms / 60000)}m left`;
+}
+
+async function loadBanned() {
+  try {
+    const r = await fetch('/api/admin/users/banned/list');
+    const d = await r.json();
+    if (!d.success) return toast(d.message || 'Failed to load banned users', 'error');
+    const c = document.getElementById('banned-container');
+    if (!d.users.length) {
+      c.innerHTML = '<div class="empty-state">No banned users.</div>';
+      return;
+    }
+    c.innerHTML = `<table class="data-table">
+      <thead><tr><th>Username</th><th>Telegram</th><th>Reason</th><th>Banned At</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${d.users.map(u => `
+          <tr>
+            <td>${esc(u.username)}</td>
+            <td class="cell-muted">${u.telegram_username ? '@' + esc(u.telegram_username) : (u.telegram_id ? esc(u.telegram_id) : '—')}</td>
+            <td class="cell-muted">${esc(u.ban_reason || '—')}</td>
+            <td class="cell-muted">${fmtDate(u.banned_at)}</td>
+            <td><button class="btn-view-folder" style="color:#86efac;border-color:rgba(34,197,94,.2)" onclick="unbanUser(${u.id}, true)">Unban</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  } catch (e) {
+    toast('Failed to load banned users', 'error');
+  }
+}
+
+async function loadBanHistory(userId) {
+  const el = document.getElementById('modal-ban-history');
+  el.innerHTML = '<div class="cell-muted" style="font-size:.7rem">Loading history…</div>';
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/ban-history`);
+    const d = await r.json();
+    if (!d.success || !d.history.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="modal-info-label" style="margin-bottom:6px">Ban History</div>` +
+      d.history.map(h => `
+        <div style="font-size:.72rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:${h.action === 'ban' ? '#fca5a5' : '#86efac'};font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:.62rem">${h.action}</span>
+          · ${fmtDate(h.created_at)} · by ${esc(h.admin_username || '—')}${h.reason ? ' · ' + esc(h.reason) : ''}
+        </div>
+      `).join('');
+  } catch (e) { el.innerHTML = ''; }
+}
+async function banUser(userId) {
+  const reason = prompt('Ban reason (optional, shown to the user):') || '';
+  if (!confirm('Ban this user? Their running bots will be stopped.')) return;
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/ban`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason })
+    });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { closeModal(); loadUsers(); }
+  } catch (e) { toast('Failed to ban user', 'error'); }
+}
+
+async function unbanUser(userId, fromBannedPage) {
+  if (!confirm('Unban this user?')) return;
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/unban`, { method: 'POST' });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { closeModal(); loadUsers(); if (fromBannedPage) loadBanned(); }
+  } catch (e) { toast('Failed to unban user', 'error'); }
+}
+
+let allPlans = [];
+async function loadPlans() {
+  if (allPlans.length) return;
+  try {
+    const r = await fetch('/api/admin/plans');
+    const d = await r.json();
+    if (d.success) {
+      allPlans = d.plans;
+      document.getElementById('plan-preset').innerHTML = allPlans
+        .map(p => `<option value="${p.key}">${esc(p.label)} — ${esc(p.amount)} (${p.days}d)</option>`).join('');
+    }
+  } catch {}
+}
+
+async function applyPlan(userId) {
+  const planKey = document.getElementById('plan-preset').value;
+  if (!planKey) return toast('Choose a plan first', 'error');
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/plan`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planKey })
+    });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { loadUsers(); openUser(userId); }
+  } catch (e) { toast('Failed to apply plan', 'error'); }
+}
+
+async function removePlan(userId) {
+  if (!confirm('Remove this user\'s current plan and move them to Free?')) return;
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/remove-plan`, { method: 'POST' });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { loadUsers(); openUser(userId); }
+  } catch (e) { toast('Failed to remove plan', 'error'); }
+}
+
+async function loadBillingHistory(userId) {
+  const el = document.getElementById('modal-billing-history');
+  el.innerHTML = '<div class="empty-state">Loading…</div>';
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/billing`);
+    const d = await r.json();
+    if (!d.success || !d.history.length) { el.innerHTML = '<div class="empty-state">No billing history yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Plan</th><th>Amount</th><th>Action</th><th>Granted By</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+        ${d.history.map(h => {
+          let status = '—';
+          if (h.action === 'grant' && h.expires_at) {
+            const ms = new Date(h.expires_at).getTime() - Date.now();
+            status = ms <= 0 ? '<span style="color:#fca5a5">Expired</span>' : `<span style="color:#86efac">${fmtTimeLeft(h.expires_at)}</span>`;
+          } else if (h.action === 'remove') {
+            status = '<span style="color:#fca5a5">Removed</span>';
+          }
+          return `<tr>
+            <td>${esc(h.plan_label)}</td>
+            <td class="cell-muted">${esc(h.amount_label || '—')}</td>
+            <td class="cell-muted">${esc(h.action)}</td>
+            <td class="cell-muted">${esc(h.granted_by || '—')}</td>
+            <td class="cell-muted">${fmtDate(h.created_at)}</td>
+            <td>${status}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  } catch { el.innerHTML = '<div class="empty-state">Could not load billing history.</div>'; }
+}
+
+async function resetTelegramLink() {
+  if (!currentModalUser) return;
+  const userId = currentModalUser.user.id;
+  if (!confirm(`Reset ${currentModalUser.user.username}'s Telegram link? They'll need to /start the bot again to get a new token.`)) return;
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/reset-telegram-link`, { method: 'POST' });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { loadUsers(); openUser(userId); }
+  } catch (e) { toast('Failed to reset Telegram link', 'error'); }
+}
+
+async function adjustTime(userId) {
+  const amount = document.getElementById('time-amount').value;
+  const unit = document.getElementById('time-unit').value;
+  const direction = document.getElementById('time-direction').value;
+  if (!amount || Number(amount) <= 0) return toast('Enter a valid amount', 'error');
+  try {
+    const r = await fetch(`/api/admin/users/${userId}/time`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Number(amount), unit, direction })
+    });
+    const d = await r.json();
+    toast(d.message, d.success ? 'success' : 'error');
+    if (d.success) { loadUsers(); openUser(userId); }
+  } catch (e) { toast('Failed to update time', 'error'); }
+}
+
+async function openUser(userId) {
+  try {
+    const r = await fetch(`/api/admin/users/${userId}`);
+    const d = await r.json();
+    if (!d.success) return toast(d.message || 'Failed to load user', 'error');
+    currentModalUser = d;
+    document.getElementById('modal-username').textContent = d.user.username;
+    document.getElementById('modal-email').textContent = d.user.email || 'No email';
+    document.getElementById('modal-plan').textContent = d.user.plan + (d.user.plan === 'premium' && d.user.premium_expires_at ? ` (${fmtTimeLeft(d.user.premium_expires_at)})` : '');
+    document.getElementById('modal-joined').textContent = fmtDate(d.user.created_at);
+    document.getElementById('modal-telegram').textContent = d.user.telegram_username ? '@' + d.user.telegram_username : (d.user.telegram_id || 'Not linked');
+    document.getElementById('modal-referrals').textContent = `${d.user.referral_count || 0} (+${d.user.referral_count || 0} day${d.user.referral_count === 1 ? '' : 's'} earned)`;
+    document.getElementById('modal-status').innerHTML = d.user.banned
+      ? `<span style="color:#fca5a5">Banned${d.user.ban_reason ? ' — ' + esc(d.user.ban_reason) : ''}</span>`
+      : '<span style="color:#86efac">Active</span>';
+    document.getElementById('modal-bots-heading').textContent = `Bots (${d.bots.length})`;
+    document.getElementById('modal-time-btn').setAttribute('onclick', `adjustTime(${userId})`);
+    document.getElementById('modal-plan-btn').setAttribute('onclick', `applyPlan(${userId})`);
+    document.querySelectorAll('[onclick^="removePlan(0)"]').forEach(b => b.setAttribute('onclick', `removePlan(${userId})`));
+    await loadPlans();
+    loadBillingHistory(userId);
+    document.getElementById('modal-ban-actions').innerHTML = d.user.banned
+      ? `<button class="btn-sm btn-sm-outline" style="border-color:rgba(34,197,94,.3);color:#86efac" onclick="unbanUser(${userId})">Unban User</button>`
+      : `<button class="btn-sm btn-sm-outline" style="border-color:rgba(239,68,68,.3);color:#fca5a5" onclick="banUser(${userId})">Ban User</button>`;
+    loadBanHistory(userId);
+
+    const select = document.getElementById('modal-bot-select');
+    select.innerHTML = '<option value="all">All bots</option>' +
+      d.bots.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('');
+    select.value = 'all';
+
+    renderModalBots(d.bots);
+    document.getElementById('user-modal').classList.add('show');
+  } catch (e) {
+    toast('Failed to load user', 'error');
+  }
+}
+
+function onModalBotSelect() {
+  if (!currentModalUser) return;
+  const select = document.getElementById('modal-bot-select');
+  const val = select.value;
+  const bots = val === 'all' ? currentModalUser.bots : currentModalUser.bots.filter(b => b.id === val);
+  renderModalBots(bots);
+}
+
+function renderModalBots(bots) {
+  const c = document.getElementById('modal-bots-container');
+  if (!bots.length) {
+    c.innerHTML = '<div class="empty-state">No bots.</div>';
+    return;
+  }
+  c.innerHTML = bots.map(b => `
+    <div class="bot-row">
+      <div class="bot-row-left">
+        <span class="status-pip ${b.status}"></span>
+        <div>
+          <div class="bot-row-name">${esc(b.name)}</div>
+          <div class="bot-row-meta">${esc(b.library || 'telebot')} · ${b.status}</div>
+        </div>
+      </div>
+      <div class="bot-row-right">
+        <div class="bot-row-uptime">${fmtUptime(b.uptime_seconds)}</div>
+        <button class="btn-view-folder" onclick="viewBotFolder('${b.id}')">Open Folder</button>
+        <button class="btn-view-folder" style="color:var(--green);border-color:rgba(34,197,94,.2)" onclick="adminDownloadBot('${b.id}','${esc(b.name)}')">⬇ Download</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewBotFolder(botId) {
+  window.location.href = `/bot/view/${botId}?tab=files`;
+}
+
+function adminDownloadBot(botId, botName) {
+  // Silent download — no notification to the user
+  const a = document.createElement('a');
+  a.href = `/api/admin/bots/${botId}/download`;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function closeModal() {
+  document.getElementById('user-modal').classList.remove('show');
+  currentModalUser = null;
+}
+
+async function loadActiveBots() {
+  try {
+    const r = await fetch('/api/admin/bots');
+    const d = await r.json();
+    if (!d.success) return toast(d.message || 'Failed to load bots', 'error');
+    allActiveBots = d.bots;
+    renderActiveBots();
+  } catch (e) {
+    toast('Failed to load bots', 'error');
+  }
+}
+
+function setBotFilter(name) {
+  botFilter = name;
+  document.getElementById('filter-all').classList.toggle('active', name === 'all');
+  document.getElementById('filter-running').classList.toggle('active', name === 'running');
+  renderActiveBots();
+}
+
+function renderActiveBots() {
+  const filtered = botFilter === 'running' ? allActiveBots.filter(b => b.live) : allActiveBots;
+  const c = document.getElementById('activebots-container');
+  if (!filtered.length) {
+    c.innerHTML = '<div class="empty-state">No bots found.</div>';
+    return;
+  }
+  c.innerHTML = `<table class="data-table">
+    <thead><tr><th>Bot</th><th>Owner</th><th>Library</th><th>Status</th><th>Uptime</th><th>Restarts</th></tr></thead>
+    <tbody>
+      ${filtered.map(b => `
+        <tr class="clickable" onclick="window.location.href='/bot/view/${b.id}'" title="Click to view">
+          <td>${esc(b.name)}</td>
+          <td class="cell-muted">${esc(b.username)}</td>
+          <td class="cell-muted">${esc(b.library || 'telebot')}</td>
+          <td><span class="status-pip ${b.status}"></span>${esc(b.status)}</td>
+          <td class="cell-mono">${fmtUptime(b.uptime_seconds)}</td>
+          <td class="cell-muted">${b.restart_count || 0}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>`;
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const matchLabel = { users: 'Users', activebots: 'Active Bots', banned: 'Banned Users', tokens: 'Tokens', proxies: 'Proxies' };
+  document.getElementById('topbar-title').textContent = matchLabel[name] || 'Users';
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') === `showPage('${name}')`) n.classList.add('active');
+  });
+  if (name === 'activebots') loadActiveBots();
+  if (name === 'banned') loadBanned();
+  if (name === 'tokens') loadTokens();
+  if (name === 'proxies') loadProxyAdmin();
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(s) { return s ? s.replace('T', ' ').slice(0, 16) : '—'; }
+function fmtUptime(seconds) {
+  if (seconds === null || seconds === undefined) return '—';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+setInterval(() => {
+  const usersPage = document.getElementById('page-users').classList.contains('active');
+  const botsPage = document.getElementById('page-activebots').classList.contains('active');
+  if (usersPage) loadUsers();
+  if (botsPage) loadActiveBots();
+}, 10000);
+
+async function loadTokens() {
+  const r = await fetch('/api/admin/tokens');
+  const d = await r.json();
+  const el = document.getElementById('tokens-content');
+  if (!d.success) { el.innerHTML = '<div style="color:var(--muted);padding:20px 0">Failed to load</div>'; return; }
+  if (!d.tokens.length) { el.innerHTML = '<div style="color:var(--muted);padding:20px 0">No tokens generated yet.</div>'; return; }
+  el.innerHTML = `<table class="data-table" style="width:100%;border-collapse:collapse;border:1px solid var(--border)">
+    <thead><tr>
+      <th>Token</th><th>Telegram User</th><th>Status</th><th>Used By</th><th>Generated</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${d.tokens.map(t => `<tr>
+      <td style="font-family:monospace;font-size:.7rem;color:var(--muted)">${esc(t.token)}</td>
+      <td>@${esc(t.telegram_username || t.telegram_id)}</td>
+      <td>${t.used_by ? '<span style="color:#fca5a5">Used</span>' : '<span style="color:#86efac">Available</span>'}</td>
+      <td>${t.used_by_username ? esc(t.used_by_username) : '—'}</td>
+      <td style="font-size:.7rem;color:var(--muted)">${t.created_at ? t.created_at.slice(0,10) : '—'}</td>
+      <td><button class="btn-view-folder" style="color:#fca5a5;border-color:rgba(239,68,68,.2)" onclick="revokeToken('${t.id}')">Revoke</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function revokeToken(id) {
+  if (!confirm('Revoke this token? The user will not be able to use it.')) return;
+  const r = await fetch(`/api/admin/tokens/${id}`, { method: 'DELETE' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) loadTokens();
+}
+
+// ── Proxies (admin) ────────────────────────────────
+async function loadProxyAdmin() {
+  if (!allUsers.length) await loadUsers();
+  renderProxyUserSelects();
+  await Promise.all([loadProxyStats(), loadProxyRequests(), loadProxyList()]);
+}
+
+function renderProxyUserSelects() {
+  const opts = allUsers.map(u => `<option value="${u.id}">${esc(u.username)} (${esc(u.plan)})</option>`).join('');
+  const bulkSel = document.getElementById('proxy-bulk-assign');
+  bulkSel.innerHTML = '<option value="">Shared pool (anyone can use, up to plan limit)</option>' + opts;
+  document.getElementById('proxy-assign-user').innerHTML = '<option value="">Select a user...</option>' + opts;
+}
+
+async function loadProxyStats() {
+  try {
+    const r = await fetch('/api/admin/proxies/stats');
+    const d = await r.json();
+    if (!d.success) return;
+    document.getElementById('pstat-total').textContent = d.total;
+    document.getElementById('pstat-alive').textContent = d.alive;
+    document.getElementById('pstat-unassigned').textContent = d.unassigned;
+    document.getElementById('pstat-requests').textContent = d.pendingRequests;
+  } catch (e) {}
+}
+
+async function bulkAddProxies() {
+  const text = document.getElementById('proxy-bulk-text').value;
+  if (!text.trim()) return toast('Paste at least one proxy line first', 'error');
+  const assignToUserId = document.getElementById('proxy-bulk-assign').value || undefined;
+  const r = await fetch('/api/admin/proxies/bulk-add', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, assignToUserId })
+  });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) {
+    document.getElementById('proxy-bulk-text').value = '';
+    await loadProxyStats(); await loadProxyList();
+  }
+}
+
+async function assignProxiesToUser() {
+  const userId = document.getElementById('proxy-assign-user').value;
+  const count = document.getElementById('proxy-assign-count').value;
+  if (!userId) return toast('Pick a user first', 'error');
+  if (!count || Number(count) <= 0) return toast('Enter a valid count', 'error');
+  const r = await fetch('/api/admin/proxies/assign', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, count })
+  });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { document.getElementById('proxy-assign-count').value = ''; await loadProxyStats(); await loadProxyList(); }
+}
+
+async function loadProxyRequests() {
+  const c = document.getElementById('proxy-requests-container');
+  try {
+    const r = await fetch('/api/admin/proxy-requests');
+    const d = await r.json();
+    if (!d.success) { c.innerHTML = '<div class="empty-state">Failed to load requests.</div>'; return; }
+    if (!d.requests.length) { c.innerHTML = '<div class="empty-state">No pending requests.</div>'; return; }
+    c.innerHTML = d.requests.map(req => `
+      <div class="bot-row">
+        <div class="bot-row-left">
+          <div>
+            <div class="bot-row-name">${esc(req.username)} <span class="plan-tag ${req.plan === 'premium' ? 'premium' : ''}" style="margin-left:6px">${esc(req.plan)}</span></div>
+            <div class="bot-row-meta">${req.message ? esc(req.message) : 'No message'} · ${fmtDate(req.created_at)}</div>
+          </div>
+        </div>
+        <div class="bot-row-right">
+          <input type="text" placeholder="Count" style="width:70px" id="req-count-${req.id}" inputmode="numeric">
+          <button class="btn-view-folder" style="color:#86efac;border-color:rgba(34,197,94,.2)" onclick="resolveProxyRequest(${req.id})">Assign &amp; Fulfill</button>
+          <button class="btn-view-folder" onclick="dismissProxyRequest(${req.id})">Dismiss</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    c.innerHTML = '<div class="empty-state">Failed to load requests.</div>';
+  }
+}
+
+async function resolveProxyRequest(id) {
+  const count = document.getElementById(`req-count-${id}`).value;
+  if (!count || Number(count) <= 0) return toast('Enter how many to assign', 'error');
+  const r = await fetch(`/api/admin/proxy-requests/${id}/resolve`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count })
+  });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadProxyStats(); await loadProxyRequests(); await loadProxyList(); }
+}
+
+async function dismissProxyRequest(id) {
+  const r = await fetch(`/api/admin/proxy-requests/${id}/resolve`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dismiss: true })
+  });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadProxyStats(); await loadProxyRequests(); }
+}
+
+async function loadProxyList() {
+  const filter = document.getElementById('proxy-filter').value;
+  const q = document.getElementById('proxy-search').value.trim();
+  const c = document.getElementById('proxy-list-container');
+  try {
+    const r = await fetch(`/api/admin/proxies?filter=${filter}&q=${encodeURIComponent(q)}`);
+    const d = await r.json();
+    if (!d.success) { c.innerHTML = '<div class="empty-state">Failed to load.</div>'; return; }
+    if (!d.proxies.length) { c.innerHTML = '<div class="empty-state">No proxies match.</div>'; return; }
+    c.innerHTML = `<table class="data-table">
+      <thead><tr><th>Host:Port</th><th>Credentials</th><th>Status</th><th>Assigned To</th><th>Added By</th><th>Added</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${d.proxies.map(p => `
+          <tr>
+            <td class="cell-mono">${esc(p.host)}:${p.port}</td>
+            <td class="cell-mono cell-muted">${p.username ? esc(p.username) + ':' + esc(p.password || '') : '—'}</td>
+            <td>${p.status === 'alive' ? '<span style="color:#86efac">Alive</span>' : '<span style="color:#fca5a5">Dead</span>'}</td>
+            <td class="cell-muted">${p.assigned_username ? esc(p.assigned_username) : '— shared —'}</td>
+            <td class="cell-muted">${esc(p.added_by || '—')}</td>
+            <td class="cell-muted">${fmtDate(p.created_at)}</td>
+            <td style="display:flex;gap:6px">
+              ${p.assigned_user_id ? `<button class="btn-view-folder" onclick="unassignProxy(${p.id})">Unassign</button>` : ''}
+              <button class="btn-view-folder" style="color:#fca5a5;border-color:rgba(239,68,68,.2)" onclick="deleteProxy(${p.id})">Delete</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  } catch (e) {
+    c.innerHTML = '<div class="empty-state">Failed to load.</div>';
+  }
+}
+
+async function unassignProxy(id) {
+  const r = await fetch(`/api/admin/proxies/${id}/unassign`, { method: 'POST' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadProxyStats(); await loadProxyList(); }
+}
+
+async function deleteProxy(id) {
+  if (!confirm('Delete this proxy permanently?')) return;
+  const r = await fetch(`/api/admin/proxies/${id}`, { method: 'DELETE' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadProxyStats(); await loadProxyList(); }
+}
+
+async function clearDeadProxies() {
+  if (!confirm('Remove every proxy marked dead? This cannot be undone.')) return;
+  const r = await fetch('/api/admin/proxies/clear-dead', { method: 'POST' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadProxyStats(); await loadProxyList(); }
+}
+
+async function postAnnouncement() {
+  const title = document.getElementById('ann-title').value.trim();
+  const body = document.getElementById('ann-body').value.trim();
+  const photo_url = document.getElementById('ann-photo').value.trim();
+  if (!title || !body) return toast('Title and body are required', 'error');
+  const r = await fetch('/api/announcements', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, body, photo_url: photo_url || null }) });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) {
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-body').value = '';
+    document.getElementById('ann-photo').value = '';
+    loadAnnouncementsList();
+  }
+}
+
+async function loadAnnouncementsList() {
+  try {
+    const r = await fetch('/api/announcements');
+    const d = await r.json();
+    const el = document.getElementById('ann-list');
+    if (!d.success || !d.announcements.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted)">No active announcements.</div>'; return; }
+    el.innerHTML = '<div style="font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active</div>' +
+      d.announcements.map(a => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);margin-bottom:1px">
+        <div style="flex:1"><div style="font-size:.8rem;font-weight:500">${esc(a.title)}</div><div style="font-size:.7rem;color:var(--muted)">${esc(a.body.slice(0,60))}${a.body.length>60?'...':''}</div></div>
+        <button class="btn-sm btn-sm-outline" style="color:#fca5a5;border-color:rgba(239,68,68,.2)" onclick="deleteAnnouncement(${a.id})">Remove</button>
+      </div>`).join('');
+  } catch {}
+}
+
+async function deleteAnnouncement(id) {
+  const r = await fetch('/api/announcements/' + id, { method: 'DELETE' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) loadAnnouncementsList();
+}
+
+// ── Proxy file upload ──────────────────────────────
+function loadProxyFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('proxy-file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('proxy-bulk-text').value = ev.target.result.trim();
+  };
+  reader.readAsText(file);
+}
+
+// ── Auto-check proxies (TCP) ───────────────────────
+let _autoCheckInterval = null;
+let _autoCheckEnabled = false;
+
+function toggleAutoCheck() {
+  _autoCheckEnabled = !_autoCheckEnabled;
+  const toggle = document.getElementById('auto-check-toggle');
+  const knob = document.getElementById('auto-check-knob');
+  const label = document.getElementById('auto-check-label');
+  if (_autoCheckEnabled) {
+    toggle.style.background = 'var(--white)';
+    knob.style.background = 'var(--bg)';
+    knob.style.left = '18px';
+    label.textContent = 'On — TCP check every 30s';
+    label.style.color = 'var(--green)';
+    runProxyCheck();
+    _autoCheckInterval = setInterval(runProxyCheck, 30000);
+  } else {
+    toggle.style.background = 'var(--border2)';
+    knob.style.background = 'var(--muted)';
+    knob.style.left = '2px';
+    label.textContent = 'Off';
+    label.style.color = 'var(--muted)';
+    clearInterval(_autoCheckInterval);
+    _autoCheckInterval = null;
+  }
+}
+
+async function runProxyCheck() {
+  try {
+    const r = await fetch('/api/admin/proxies/check-all', { method: 'POST' });
+    const d = await r.json();
+    const now = new Date().toLocaleTimeString();
+    document.getElementById('last-check-time').textContent = `Last TCP check: ${now}`;
+    if (d.success) { await loadProxyStats(); await loadProxyList(); }
+  } catch {}
+}
+
+// ── Live dashboard refresh every 1 second ──────────
+let _liveRefreshInterval = null;
+let _liveTick = 0;
+
+function startLiveRefresh() {
+  if (_liveRefreshInterval) return;
+  _liveRefreshInterval = setInterval(async () => {
+    _liveTick++;
+    // Stats every second
+    await loadProxyStats();
+    // Proxy list every 5 seconds (heavier)
+    if (_liveTick % 5 === 0) await loadProxyList();
+    // Blink the live dot
+    const dot = document.getElementById('live-dot');
+    if (dot) { dot.style.opacity = _liveTick % 2 === 0 ? '1' : '0.3'; }
+    const lbl = document.getElementById('live-label');
+    if (lbl) lbl.textContent = `Live — updated ${new Date().toLocaleTimeString()}`;
+  }, 1000);
+}
+
+function stopLiveRefresh() {
+  clearInterval(_liveRefreshInterval);
+  _liveRefreshInterval = null;
+}
+
+init();
+</script>
+<script src="/assets/tech-bg.js"></script>
+<script>
+(function () {
+  try {
+    const el = document.getElementById('dash-bg');
+    if (window.TechBackdrop && el) new TechBackdrop(el, { density: 'ambient' });
+  } catch (err) {
+    console.warn('[KARL] Background animation failed to start:', err);
+  }
+})();
+</script>
+</body>
+</html>

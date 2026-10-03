@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARL — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090f;--surface:#0d1120;--surface2:#131829;--border:#1c2238;--border2:#252d45;
+  --white:#eef0f7;--off-white:#c8cce0;--muted:#5a6285;--muted2:#2e3554;
+  --accent:#f5a623;--accent-dim:rgba(245,166,35,0.1);--accent-glow:rgba(245,166,35,0.22);
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;--orange:#f97316;
+  --sidebar:215px;
+  --font-body:400;--font-ui:400;--font-label:500;--font-strong:600
+}
+html[data-theme="light"]{
+  --bg:#f4f5fa;--surface:#ffffff;--surface2:#eceef7;--border:#d8daea;--border2:#c4c8dd;
+  --white:#0f1120;--off-white:#2a2f4a;--muted:#6b7196;--muted2:#a0a5c0;--accent:#d4841a;--accent-dim:rgba(212,132,26,0.1);--accent-glow:rgba(212,132,26,0.2);
+}
+html[data-theme="light"] .topbar{background:rgba(244,245,250,.96)}
+html[data-theme="light"] .console-box,html[data-theme="light"] .log-line{background:var(--surface2)}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;font-weight:var(--font-body);min-height:100vh;display:flex}
+a{text-decoration:none;color:inherit}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50}
+.sidebar-logo{padding:18px 18px 16px;border-bottom:1px solid var(--border);font-size:.95rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;color:var(--muted);font-size:.8rem;font-weight:var(--font-ui);cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent;border-left:2px solid transparent}
+.nav-item:hover{color:var(--white);background:var(--surface2)}
+.nav-item.active{color:var(--white);background:var(--surface2);border-left-color:var(--accent);border-color:var(--border2)}
+.nav-item-icon{font-size:.75rem;width:14px;text-align:center;flex-shrink:0;opacity:.6}
+.nav-create{background:var(--accent);color:#07090f;font-weight:700;margin-top:6px;border-color:transparent!important;border-left-color:transparent!important}
+.nav-create:hover{background:#f0b84a!important;color:#07090f!important}
+.sidebar-bottom{margin-top:auto;padding:14px 10px;border-top:1px solid var(--border)}
+.user-chip{padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;margin-bottom:8px}
+.user-name{font-size:.8rem;font-weight:var(--font-label);margin-bottom:2px}
+.user-plan{font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:var(--font-ui)}
+.user-plan.premium{color:var(--white)}
+.btn-logout{width:100%;padding:7px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:.7rem;font-weight:var(--font-label);letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .15s;border-radius:3px}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── Main ── */
+.main{margin-left:var(--sidebar);flex:1;position:relative;z-index:1}
+.topbar{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:40;background:rgba(7,9,15,.96);backdrop-filter:blur(8px)}
+.topbar-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.plan-badge{padding:3px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;border:1px solid var(--border2);color:var(--muted)}
+.theme-toggle{width:30px;height:30px;border-radius:5px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'JetBrains Mono',monospace}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.plan-badge.premium{border-color:var(--accent-glow);color:var(--accent)}
+.content{padding:20px 20px 32px}
+.page{display:none}.page.active{display:block}
+
+/* ── Stats ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:28px}
+.stat-cell{background:var(--bg);padding:16px 20px;transition:background .15s}
+.stat-cell:hover{background:var(--surface)}
+.stat-value{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:500;letter-spacing:-1.5px;line-height:1;margin-bottom:6px}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+
+/* ── Section ── */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-heading{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.btn-sm{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:3px;font-size:.65rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-sm-white{background:var(--accent);color:#07090f;font-weight:700}
+.btn-sm-white:hover{background:#f0b84a}
+.btn-sm-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}
+.btn-sm-outline:hover{border-color:var(--white);color:var(--white)}
+
+/* ── Bot Cards (redesigned) ── */
+.bots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,320px));justify-content:start;gap:14px}
+.bot-card{background:var(--bg);border:1px solid var(--border);display:flex;transition:background .15s,border-color .15s;position:relative;overflow:hidden;border-radius:4px}
+.bot-card:hover{border-color:var(--border2)}
+.bot-card:hover{background:var(--surface)}
+.bc-status-bar{width:3px;flex-shrink:0}
+.bc-body{flex:1;padding:18px 18px 14px;min-width:0}
+.bc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.bc-name{font-size:.9rem;font-weight:600;letter-spacing:-.2px;cursor:pointer;transition:color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.bc-name:hover{color:var(--accent)}
+.bc-status-pill{font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:2px;flex-shrink:0;border:1px solid}
+.bc-status-pill.running{color:var(--green);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.07)}
+.bc-status-pill.stopped{color:var(--muted);border-color:var(--border2);background:transparent}
+.bc-status-pill.error{color:#fca5a5;border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.07)}
+.bc-status-pill.restarting,.bc-status-pill.starting{color:var(--yellow);border-color:rgba(234,179,8,.25);background:rgba(234,179,8,.07)}
+.bc-lib{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:400;letter-spacing:.5px;color:var(--muted);margin-bottom:14px;text-transform:uppercase}
+.bc-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);margin-bottom:10px}
+.bc-metric{padding:10px 12px;border-right:1px solid var(--border)}
+.bc-metric:last-child{border-right:none}
+.bc-metric-val{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:500;color:var(--white);margin-bottom:2px;letter-spacing:-.5px}
+.bc-metric-val.warn{color:var(--yellow)}
+.bc-metric-label{font-size:.55rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.bc-storage-bar{height:2px;background:var(--border);margin-bottom:14px;border-radius:1px;overflow:hidden}
+.bc-storage-fill{height:100%;border-radius:1px;transition:width .4s ease}
+.bc-actions{display:flex;gap:3px}
+.bc-btn{flex:1;padding:6px 2px;font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);border-radius:2px;transition:all .15s;white-space:nowrap}
+.bc-btn:hover{color:var(--white);border-color:var(--white)}
+.bc-start{color:var(--green);border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.05)}
+.bc-start:hover{background:rgba(34,197,94,.12);border-color:var(--green)}
+.bc-stop{color:#fca5a5;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)}
+.bc-stop:hover{background:rgba(239,68,68,.12);border-color:#fca5a5}
+.bc-restart{color:var(--yellow);border-color:rgba(234,179,8,.2);background:rgba(234,179,8,.04)}
+.bc-restart:hover{background:rgba(234,179,8,.12);border-color:var(--yellow)}
+.bc-logs,.bc-view{flex:0;padding:6px 10px}
+.bc-del{flex:0;padding:6px 8px;color:var(--muted2);border-color:transparent}
+.bc-del:hover{color:#fca5a5;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)}
+
+.empty-state{background:var(--surface);border:1px solid var(--border);padding:64px 40px;text-align:center}
+.empty-num{font-family:'JetBrains Mono',monospace;font-size:3rem;font-weight:500;color:var(--border2);letter-spacing:-3px;margin-bottom:10px}
+.empty-title{font-size:.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.empty-sub{color:var(--muted);font-size:.8rem;margin-bottom:20px}
+
+/* ── Activity Feed ── */
+.activity-feed{border:1px solid var(--border);background:var(--bg);max-height:230px;overflow-y:auto}
+.activity-row{display:flex;align-items:flex-start;gap:12px;padding:8px 16px;border-bottom:1px solid var(--border);transition:background .12s}
+.activity-row:last-child{border-bottom:none}
+.activity-row:hover{background:var(--surface)}
+.activity-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.activity-dot.info{background:var(--green)}
+.activity-dot.warn{background:var(--yellow)}
+.activity-dot.error{background:var(--red)}
+.activity-body{flex:1;min-width:0}
+.activity-bot{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.activity-msg{font-size:.75rem;color:var(--off-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-time{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);flex-shrink:0;padding-top:2px}
+.activity-empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:.78rem}
+
+/* ── Logs ── */
+.logs-wrap{background:var(--surface);border:1px solid var(--border)}
+.logs-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.logs-title{font-size:.65rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.logs-body{padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:.72rem;max-height:500px;overflow-y:auto;background:var(--bg);line-height:1.85;color:var(--muted)}
+.logs-body .log-entry{display:flex;gap:10px;border-bottom:1px solid rgba(30,30,30,.5);padding:3px 0}
+.log-time{color:var(--muted2);flex-shrink:0;font-size:.68rem}
+.log-info{color:#a3d9a5}
+.log-warn{color:#fde68a}
+.log-error{color:#fca5a5}
+.log-msg{word-break:break-all}
+.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;color:var(--green);padding:3px 8px;border:1px solid rgba(34,197,94,.2);border-radius:2px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .8s infinite}
+
+/* ── Billing ── */
+.billing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);max-width:680px}
+.billing-card{background:var(--bg);padding:32px}
+.billing-name{font-size:.6rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.billing-price{font-size:2.2rem;font-weight:var(--font-strong);letter-spacing:-2px;margin-bottom:3px}
+.billing-period{font-size:.65rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;font-weight:var(--font-ui)}
+.billing-feats{list-style:none;display:flex;flex-direction:column;gap:0;margin-bottom:24px;padding-top:16px;border-top:1px solid var(--border)}
+.billing-feats li{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);padding:9px 0;border-bottom:1px solid var(--border);font-weight:var(--font-ui)}
+.billing-feats li strong{color:var(--white);font-weight:var(--font-label)}
+.btn-upgrade{display:block;text-align:center;padding:12px;background:var(--accent);color:#07090f;font-weight:700;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:none;font-family:'JetBrains Mono',monospace;transition:all .15s;width:100%}
+.btn-upgrade:hover{background:#f0b84a}
+.btn-upgrade:disabled{opacity:.4;cursor:not-allowed}
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.pay-btn{padding:10px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:.65rem;font-weight:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .15s;border-radius:3px}
+.pay-btn:hover{border-color:var(--white);color:var(--white)}
+.pay-btn.selected{border-color:var(--white);color:var(--white);background:rgba(245,245,245,.05)}
+input[type=file]{width:100%;background:var(--surface2);border:1px solid var(--border2);padding:9px;color:var(--muted);font-size:.75rem;border-radius:3px;margin-top:4px}
+
+/* ── Security ── */
+.security-table{width:100%;border-collapse:collapse;border:1px solid var(--border)}
+.security-table th{padding:10px 14px;font-size:.6rem;font-weight:var(--font-label);letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);background:var(--surface)}
+.security-table td{padding:9px 14px;font-size:.72rem;font-weight:var(--font-ui);color:var(--muted);border-bottom:1px solid var(--border);font-family:'Courier New',monospace}
+.security-table tr:hover td{background:var(--surface);color:var(--white)}
+.ip-cell{color:var(--red)!important;font-weight:var(--font-label)!important}
+.country-badge{padding:2px 7px;border:1px solid var(--border2);font-size:.6rem;font-weight:var(--font-label);letter-spacing:1px}
+
+/* ── Misc ── */
+select{background:var(--surface2);border:1px solid var(--border2);color:var(--white);padding:7px 10px;border-radius:3px;font-family:inherit;font-size:.75rem;font-weight:var(--font-ui);outline:none}
+select:focus{border-color:var(--white)}
+.del-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.del-overlay.show{display:flex}
+.del-box{background:var(--surface);border:1px solid var(--border2);padding:28px;max-width:360px;width:90%}
+.del-title{font-size:.8rem;font-weight:var(--font-label);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.del-msg{font-size:.78rem;color:var(--muted);font-weight:var(--font-ui);line-height:1.5}
+.del-name-input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:9px 12px;font-family:'Inter',sans-serif;font-size:.8rem;outline:none;border-radius:3px;margin-top:10px;transition:border-color .15s}
+.del-name-input:focus{border-color:var(--red)}
+.del-name-input::placeholder{color:var(--muted2)}
+.del-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.announcement-banner{padding:14px 20px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-left:3px solid #3b82f6;margin-bottom:16px}
+.announcement-banner.dismiss-btn{cursor:pointer;color:var(--muted);background:none;border:none;font-size:.7rem;font-family:inherit;letter-spacing:1px;text-transform:uppercase}
+.announcement-photo{width:100%;max-height:200px;object-fit:cover;margin-top:10px;border-radius:2px}
+.env-row{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg);border:1px solid var(--border);margin-bottom:1px}
+.env-key{font-family:'Courier New',monospace;font-size:.78rem;font-weight:500;color:var(--white);flex:1}
+.env-val{font-family:'Courier New',monospace;font-size:.72rem;color:var(--muted);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.env-del{background:transparent;border:none;color:var(--muted2);font-size:.75rem;cursor:pointer;padding:2px 6px;transition:color .15s}
+.env-del:hover{color:var(--red)}
+.uptime-badge{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--green);padding:2px 6px;border:1px solid rgba(34,197,94,.2);border-radius:2px;flex-shrink:0}
+.trial-banner{padding:12px 20px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-left:3px solid var(--yellow);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.trial-banner.expired{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);border-left-color:var(--red)}
+.trial-text{font-size:.75rem;font-weight:var(--font-ui);color:var(--yellow);line-height:1.5}
+.trial-text.expired{color:#fca5a5}
+.trial-days{font-size:1.4rem;font-weight:var(--font-strong);letter-spacing:-1px;color:var(--yellow);flex-shrink:0}
+.trial-days.expired{color:#fca5a5}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-left:2px solid var(--white);font-size:.75rem;font-weight:var(--font-ui);z-index:1000;transform:translateY(100px);opacity:0;transition:all .25s;max-width:280px;border-radius:3px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left-color:var(--green);color:#86efac}
+.toast.error{border-left-color:var(--red);color:#fca5a5}
+.toast.warn{border-left-color:var(--yellow);color:#fde68a}
+
+/* ── Proxies ── */
+.proxy-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px}
+.proxy-preview{background:var(--bg);border:1px solid var(--border);max-height:280px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.7rem;color:var(--muted);padding:14px 16px;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.switch{position:relative;display:inline-block;width:38px;height:21px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch-track{position:absolute;cursor:pointer;inset:0;background:var(--surface2);border:1px solid var(--border2);border-radius:21px;transition:all .15s}
+.switch-track:before{content:"";position:absolute;width:15px;height:15px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:all .15s}
+.switch input:checked + .switch-track{background:rgba(34,197,94,.15);border-color:var(--green)}
+.switch input:checked + .switch-track:before{transform:translateX(16px);background:var(--green)}
+.proxy-bot-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);margin-bottom:1px}
+.proxy-bot-name{font-size:.8rem;font-weight:var(--font-label)}
+
+/* ── Mobile sidebar toggle ── */
+.hamburger-btn{display:none;width:30px;height:30px;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border2);color:var(--white);font-size:1rem;border-radius:3px;cursor:pointer;flex-shrink:0}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99}
+.sidebar-overlay.show{display:block}
+
+@media(max-width:768px){
+  .sidebar{display:flex;transform:translateX(-100%);transition:transform .22s ease;z-index:100}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .hamburger-btn{display:flex}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .billing-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="dash-bg" style="position:fixed;inset:0;opacity:.55;pointer-events:none;z-index:0"></canvas>
+
+<div class="sidebar">
+  <div class="sidebar-logo">KARL</div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-item-icon">▣</span> Dashboard</div>
+    <div class="nav-item" onclick="goToFiles()"><span class="nav-item-icon">📁</span> Files</div>
+    <div class="nav-item" onclick="showPage('logs')"><span class="nav-item-icon">≡</span> Live Logs</div>
+    <div class="nav-item" onclick="showPage('proxies')"><span class="nav-item-icon">⇄</span> Proxies</div>
+    <div class="nav-item" id="nav-security" onclick="showPage('security')"><span class="nav-item-icon">⊘</span> Security</div>
+    <div class="nav-item" id="nav-admin" onclick="window.location.href='/admin'"><span class="nav-item-icon">◆</span> Admin</div>
+    <div class="nav-item" onclick="showPage('envvars')"><span class="nav-item-icon">$</span> Env Vars</div>
+    <div class="nav-item" onclick="showPage('billing')"><span class="nav-item-icon">◈</span> Billing</div>
+  </div>
+  <div class="nav-section" style="margin-top:6px">
+    <div class="nav-label">Actions</div>
+    <div class="nav-item nav-create" onclick="window.location.href='/bot/create'"><span class="nav-item-icon" style="opacity:1">+</span> New Bot</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="user-name" id="sidebar-username">—</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sidebar-email"></div>
+      <div class="user-plan" id="sidebar-plan">free</div>
+    </div>
+    <form action="/api/auth/logout" method="POST"><button type="submit" class="btn-logout">Sign Out</button></form>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">M</button>
+      <div class="plan-badge" id="plan-badge">Free</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div id="announcement-banner" style="display:none"></div>
+      <div id="trial-banner" style="display:none"></div>
+      <div class="stats-row">
+        <div class="stat-cell"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Bots</div></div>
+        <div class="stat-cell"><div class="stat-value" style="color:var(--green)" id="stat-running">0</div><div class="stat-label">Running</div></div>
+        <div class="stat-cell"><div class="stat-value" style="color:var(--muted2)" id="stat-stopped">0</div><div class="stat-label">Stopped</div></div>
+        <div class="stat-cell"><div class="stat-value" id="stat-storage">0 B</div><div class="stat-label">Storage</div></div>
+      </div>
+      <div class="section-head">
+        <div class="section-heading">Your Bots</div>
+        <button class="btn-sm btn-sm-white" onclick="window.location.href='/bot/create'">+ New Bot</button>
+      </div>
+      <div id="bots-container"></div>
+
+      <div style="margin-top:28px">
+        <div class="section-head" style="margin-bottom:12px">
+          <div class="section-heading">Recent Activity</div>
+          <button class="btn-sm btn-sm-outline" onclick="loadActivity()">Refresh</button>
+        </div>
+        <div class="activity-feed" id="activity-feed">
+          <div class="activity-empty">Loading activity...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proxies -->
+    <div class="page" id="page-proxies">
+      <div class="section-head">
+        <div class="section-heading">Proxies</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-sm-outline" onclick="loadProxies()">Refresh</button>
+        </div>
+      </div>
+
+      <!-- What are proxies -->
+      <div style="background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px">
+        <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">What are Proxies?</div>
+        <div style="font-size:.8rem;color:var(--white);line-height:1.7;margin-bottom:12px">A proxy is a middleman server that your bot connects through instead of connecting directly to Telegram. This hides your bot's real IP address and helps avoid rate limits or bans from Telegram, especially if you are running multiple bots.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="padding:12px 14px;background:var(--bg);border:1px solid var(--border2)">
+            <div style="font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:6px">Without Proxy</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.6">Your Bot → Telegram<br>Telegram sees your server IP. If many bots share the same IP, Telegram may rate-limit or ban it.</div>
+          </div>
+          <div style="padding:12px 14px;background:var(--bg);border:1px solid var(--border2)">
+            <div style="font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:6px">With Proxy</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.6">Your Bot → Proxy → Telegram<br>Each bot gets its own IP. More stable, less likely to get blocked by Telegram.</div>
+          </div>
+        </div>
+        <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">How to enable a proxy for your bot</div>
+        <div style="font-size:.75rem;color:var(--muted);line-height:1.8;margin-bottom:10px">1. Scroll down to <strong style="color:var(--white)">Use Per Bot</strong> and toggle the proxy switch for your bot.<br>2. Restart the bot — it will now route traffic through the proxy automatically.<br>3. You do not need to change anything in your code. KARL handles the proxy setup.</div>
+        <div style="font-size:.7rem;color:var(--muted);padding:10px 14px;background:rgba(234,179,8,.04);border:1px solid rgba(234,179,8,.15);border-left:2px solid var(--yellow);line-height:1.6">
+          Proxies are shared from the KARL pool or assigned to you personally by the admin. If you need more or a dedicated proxy, use the <strong style="color:var(--white)">Request More</strong> section below.
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="proxy-stats" style="grid-template-columns:repeat(5,1fr)">
+        <div class="stat-cell"><div class="stat-value" id="proxy-stat-total">0</div><div class="stat-label">Available To You</div></div>
+        <div class="stat-cell"><div class="stat-value" id="proxy-stat-shared">0 / 0</div><div class="stat-label">Shared Pool</div></div>
+        <div class="stat-cell"><div class="stat-value" id="proxy-stat-assigned">0</div><div class="stat-label">Assigned To You</div></div>
+        <div class="stat-cell"><div class="stat-value" id="proxy-stat-alive" style="color:var(--green)">–</div><div class="stat-label">Alive</div></div>
+        <div class="stat-cell"><div class="stat-value" id="proxy-stat-dead" style="color:#ef4444">–</div><div class="stat-label">Dead</div></div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-heading">Your Proxies (credentials masked)</div>
+      </div>
+      <div class="proxy-preview" id="proxy-preview" style="margin-bottom:24px">Loading...</div>
+
+      <div class="section-head">
+        <div class="section-heading">Use Per Bot</div>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px;line-height:1.6">Toggle a proxy for each bot. When enabled, that bot will route its Telegram requests through a proxy from your pool. Restart the bot after toggling.</div>
+      <div id="proxy-bots-container" style="margin-bottom:24px"></div>
+
+      <div class="section-head">
+        <div class="section-heading">Need More Proxies?</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);padding:16px">
+        <div style="font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:12px">If you need more proxies or a dedicated proxy (not shared with others), send a request to the admin. Include why you need them and how many.</div>
+        <textarea class="notes-textarea-like" id="proxy-request-msg" placeholder="e.g. I need 5 proxies for my scraper bot — one per bot to avoid rate limits." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:10px 12px;font-family:inherit;font-size:.78rem;resize:vertical;min-height:60px;outline:none;border-radius:3px;margin-bottom:10px"></textarea>
+        <button class="btn-sm btn-sm-white" onclick="requestMoreProxies()">Send Request</button>
+      </div>
+    </div>
+
+    <!-- Live Logs -->
+    <div class="page" id="page-logs">
+      <div class="section-head">
+        <div class="section-heading">Live Logs</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="log-bot-select" onchange="switchLiveBot()"><option value="">Select bot...</option></select>
+          <button class="btn-sm btn-sm-outline" onclick="clearLogsDisplay()">Clear</button>
+        </div>
+      </div>
+      <div class="logs-wrap">
+        <div class="logs-top">
+          <div class="logs-title" id="logs-bot-name">No bot selected</div>
+          <div class="live-badge" id="live-indicator" style="display:none"><div class="live-dot"></div> Live</div>
+        </div>
+        <div class="logs-body" id="logs-body"><span style="color:var(--muted2)">Select a bot to stream its logs.</span></div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="page" id="page-security">
+      <div class="section-head">
+        <div class="section-heading">DDoS &amp; Security Logs</div>
+        <button class="btn-sm btn-sm-outline" onclick="loadSecurity()">Refresh</button>
+      </div>
+      <div id="security-content">
+        <div style="color:var(--muted);font-size:.8rem;padding:40px 0">Loading security data...</div>
+      </div>
+    </div>
+
+    <!-- Env Vars -->
+    <div class="page" id="page-envvars">
+      <div class="section-head">
+        <div class="section-heading">Environment Variables</div>
+        <select id="env-bot-select" onchange="loadEnvVars()" style="font-size:.72rem"><option value="">Select a bot...</option></select>
+      </div>
+
+      <!-- What are env vars -->
+      <div style="background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px">
+        <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">What are Environment Variables?</div>
+        <div style="font-size:.8rem;color:var(--white);line-height:1.7;margin-bottom:14px">Environment variables let you store sensitive information like API keys, passwords, and tokens <strong>outside your code</strong>. Instead of hardcoding your bot token inside your Python file, you save it here and your bot reads it automatically when it starts.</div>
+        <div style="font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:16px">This keeps your credentials safe — if you share your bot code with someone, they won't see your keys because they aren't in the code itself.</div>
+
+        <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Example — Bot Token</div>
+        <div style="background:var(--bg);border:1px solid var(--border2);padding:12px 14px;margin-bottom:4px;font-family:'Courier New',monospace;font-size:.72rem;line-height:1.8">
+          <div style="color:var(--muted)">Key &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value</div>
+          <div><span style="color:#93c5fd">BOT_TOKEN</span> &nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#86efac">8554648666:AAF0gTJT6cfPuN6rq...</span></div>
+          <div><span style="color:#93c5fd">ADMIN_ID</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#86efac">123456789</span></div>
+          <div><span style="color:#93c5fd">API_KEY</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#86efac">sk-abc123yourkeyhere</span></div>
+        </div>
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:16px">In your Python code, read them like this:</div>
+        <div style="background:var(--bg);border:1px solid var(--border2);border-left:2px solid #3b82f6;padding:12px 14px;font-family:'Courier New',monospace;font-size:.72rem;line-height:1.9;margin-bottom:16px">
+          <div style="color:var(--muted)"># At the top of your bot.py</div>
+          <div><span style="color:#c084fc">import</span> <span style="color:var(--white)">os</span></div>
+          <div></div>
+          <div><span style="color:#86efac">BOT_TOKEN</span> <span style="color:var(--muted)">=</span> <span style="color:#c084fc">os.environ.get</span><span style="color:var(--white)">(</span><span style="color:#fbbf24">"BOT_TOKEN"</span><span style="color:var(--white)">)</span></div>
+          <div><span style="color:#86efac">ADMIN_ID</span> &nbsp;<span style="color:var(--muted)">=</span> <span style="color:#c084fc">os.environ.get</span><span style="color:var(--white)">(</span><span style="color:#fbbf24">"ADMIN_ID"</span><span style="color:var(--white)">)</span></div>
+          <div><span style="color:#86efac">API_KEY</span> &nbsp;&nbsp;<span style="color:var(--muted)">=</span> <span style="color:#c084fc">os.environ.get</span><span style="color:var(--white)">(</span><span style="color:#fbbf24">"API_KEY"</span><span style="color:var(--white)">)</span></div>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);padding:10px 14px;background:rgba(234,179,8,.04);border:1px solid rgba(234,179,8,.15);border-left:2px solid var(--yellow);line-height:1.6">
+          After saving variables here, <strong style="color:var(--white)">restart your bot</strong> for them to take effect. Variables are applied every time your bot starts.
+        </div>
+      </div>
+
+      <!-- Add variable form -->
+      <div style="background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px" id="env-add-form">
+        <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Add / Update Variable</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+          <div><div style="font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Key</div><input id="env-key" placeholder="BOT_TOKEN" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:9px 10px;font-family:'Courier New',monospace;font-size:.8rem;outline:none;border-radius:3px" oninput="this.value=this.value.toUpperCase()"></div>
+          <div><div style="font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Value</div><input id="env-val" placeholder="your secret value" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:9px 10px;font-family:'Courier New',monospace;font-size:.8rem;outline:none;border-radius:3px"></div>
+          <button class="btn-sm btn-sm-white" onclick="saveEnvVar()" style="height:36px">Save</button>
+        </div>
+      </div>
+
+      <div id="env-list"></div>
+    </div>
+
+    <!-- Billing -->
+    <div class="page" id="page-billing">
+      <div class="section-head"><div class="section-heading">Billing</div></div>
+      <div id="billing-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="del-overlay" id="del-overlay">
+  <div class="del-box">
+    <div class="del-title">Delete Bot</div>
+    <div class="del-msg">This will permanently delete the bot and all its files. <strong style="color:#fca5a5">This cannot be undone.</strong><br><br>Type the bot name to confirm:</div>
+    <input class="del-name-input" id="del-name-input" placeholder="Type bot name here..." oninput="checkDelName()">
+    <div class="del-actions">
+      <button class="btn-sm btn-sm-outline" onclick="closeDel()">Cancel</button>
+      <button class="btn-sm" id="del-confirm-btn" style="background:rgba(239,68,68,.06);color:#fca5a5;border:1px solid rgba(239,68,68,.2);opacity:.4;cursor:not-allowed" onclick="confirmDel()" disabled>Delete</button>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Theme (light/dark) ──
+// Applied immediately on load, before anything else renders, and persisted
+// in a cookie (not localStorage) so it survives across every KARL page —
+// dashboard, bot detail, create-bot, etc. — without re-prompting the user.
+function getThemeCookie() {
+  const m = document.cookie.match(/(?:^|; )karl_theme=([^;]+)/);
+  return m ? m[1] : null;
+}
+function setThemeCookie(v) {
+  document.cookie = `karl_theme=${v}; max-age=31536000; path=/`;
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'light' ? 'D' : 'M';
+}
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  setThemeCookie(next);
+}
+applyTheme(getThemeCookie() || 'dark');
+
+let currentUser = null, allBots = [], liveInterval = null, liveTs = 0, liveLogBotId = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/me');
+    const d = await r.json();
+    if (!d.success) return window.location.href = '/login';
+    currentUser = d.user;
+    document.getElementById('sidebar-username').textContent = d.user.username;
+    const planLabel = d.user.plan === 'premium' ? 'Premium' : (d.user.trial_days_left > 0 ? `Free · ${d.user.trial_days_left}d trial` : 'Free · Expired');
+    document.getElementById('sidebar-plan').textContent = planLabel;
+    document.getElementById('sidebar-plan').className = 'user-plan ' + d.user.plan;
+    if(d.user.email) document.getElementById('sidebar-email').textContent = d.user.email;
+    if (!d.user.is_admin) {
+      const secNav = document.getElementById('nav-security');
+      if (secNav) secNav.style.display = 'none';
+      const adminNav = document.getElementById('nav-admin');
+      if (adminNav) adminNav.style.display = 'none';
+    }
+    const badge = document.getElementById('plan-badge');
+    badge.textContent = d.user.plan === 'premium' ? 'Premium' : 'Free';
+    badge.className = 'plan-badge ' + (d.user.plan === 'premium' ? 'premium' : '');
+    await loadBots();
+    buildBilling();
+    renderTrialBanner(d.user);
+  } catch(e) { window.location.href = '/login'; }
+}
+
+async function loadBots() {
+  const r = await fetch('/api/bots');
+  const d = await r.json();
+  if (!d.success) return;
+  allBots = d.bots || [];
+  const running = allBots.filter(b => b.status === 'running' || b.status === 'starting' || b.status === 'restarting').length;
+  const stopped = allBots.filter(b => b.status === 'stopped' || b.status === 'error').length;
+  const storage = allBots.reduce((s, b) => s + (b.storage_used || 0), 0);
+  document.getElementById('stat-total').textContent = allBots.length;
+  document.getElementById('stat-running').textContent = running;
+  document.getElementById('stat-stopped').textContent = stopped;
+  document.getElementById('stat-storage').textContent = fmtBytes(storage);
+  // Update bot select
+  const sel = document.getElementById('log-bot-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Select bot...</option>';
+  allBots.forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.id; o.textContent = b.name;
+    sel.appendChild(o);
+  });
+  if (prev) sel.value = prev;
+  renderBots();
+  populateEnvBotSelect && populateEnvBotSelect();
+}
+
+function renderBots() {
+  const c = document.getElementById('bots-container');
+  if (!allBots.length) {
+    c.innerHTML = `<div class="empty-state">
+      <div class="empty-num">0</div>
+      <div class="empty-title">No Bots Yet</div>
+      <div class="empty-sub">Create your first bot to get started.</div>
+      <button class="btn-sm btn-sm-white" onclick="window.location.href='/bot/create'" style="margin:0 auto">+ Create Bot</button>
+    </div>`;
+    return;
+  }
+  c.innerHTML = `<div class="bots-grid">${allBots.map(botCard).join('')}</div>`;
+}
+
+function botCard(b) {
+  const isActive = ['running','starting','restarting'].includes(b.status);
+  const statusCol = {running:'var(--green)',error:'var(--red)',restarting:'var(--yellow)',starting:'var(--blue)',stopped:'var(--muted2)'};
+  const col = statusCol[b.status] || 'var(--muted2)';
+  const MAX_STORAGE = (currentUser?.plan === 'premium' ? 15 : 2.5) * 1024 * 1024 * 1024;
+  const storPct = b.storage_used ? Math.min(100, (b.storage_used / MAX_STORAGE) * 100).toFixed(1) : 0;
+  const fillCol = storPct > 85 ? 'var(--red)' : storPct > 60 ? 'var(--yellow)' : 'var(--green)';
+  const uptimeVal = (b.status === 'running' && b.uptime_start) ? fmtUptimeFull(Date.now() - b.uptime_start) : '—';
+  return `<div class="bot-card">
+    <div class="bc-status-bar" style="background:${col}"></div>
+    <div class="bc-body">
+      <div class="bc-head">
+        <div class="bc-name" onclick="window.location.href='/bot/view/${b.id}'">${esc(b.name)}</div>
+        <div class="bc-status-pill ${b.status}">${b.status}</div>
+      </div>
+      <div class="bc-lib">${esc(b.library || 'telebot')}</div>
+      <div class="bc-metrics">
+        <div class="bc-metric">
+          <div class="bc-metric-val" id="uptime-${b.id}" data-start="${b.uptime_start || ''}" data-status="${b.status}">${uptimeVal}</div>
+          <div class="bc-metric-label">Uptime</div>
+        </div>
+        <div class="bc-metric">
+          <div class="bc-metric-val ${b.restart_count >= 5 ? 'warn' : ''}">${b.restart_count || 0}</div>
+          <div class="bc-metric-label">Restarts</div>
+        </div>
+        <div class="bc-metric">
+          <div class="bc-metric-val">${fmtBytes(b.storage_used)}</div>
+          <div class="bc-metric-label">Storage</div>
+        </div>
+      </div>
+      <div class="bc-storage-bar"><div class="bc-storage-fill" style="width:${storPct}%;background:${fillCol}"></div></div>
+      <div class="bc-actions">
+        ${isActive
+          ? `<button class="bc-btn bc-stop" onclick="stopBot('${b.id}')">Stop</button>
+             <button class="bc-btn bc-restart" onclick="restartBot('${b.id}')">Restart</button>`
+          : `<button class="bc-btn bc-start" onclick="startBot('${b.id}')">Start</button>`}
+        <button class="bc-btn bc-logs" onclick="viewLogs('${b.id}','${esc(b.name)}')">Logs</button>
+        <button class="bc-btn bc-view" onclick="window.location.href='/bot/view/${b.id}'">View</button>
+        <button class="bc-btn bc-del" onclick="deleteBot('${b.id}','${esc(b.name)}')">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function startBot(id) {
+  toast('Starting bot...', 'info');
+  const r = await fetch(`/api/bots/${id}/start`, {method:'POST'});
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadBots(); viewLogs(id, allBots.find(b=>b.id===id)?.name||'Bot'); }
+}
+async function stopBot(id) {
+  const r = await fetch(`/api/bots/${id}/stop`, {method:'POST'});
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) await loadBots();
+}
+async function restartBot(id) {
+  toast('Restarting...', 'warn');
+  const r = await fetch(`/api/bots/${id}/restart`, {method:'POST'});
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) await loadBots();
+}
+let _delId = null, _delName = null;
+function deleteBot(id, name) {
+  _delId = id; _delName = name;
+  document.getElementById('del-name-input').value = '';
+  checkDelName();
+  document.getElementById('del-overlay').classList.add('show');
+}
+function closeDel() { document.getElementById('del-overlay').classList.remove('show'); }
+function checkDelName() {
+  const val = document.getElementById('del-name-input').value.trim();
+  const btn = document.getElementById('del-confirm-btn');
+  const match = val === _delName;
+  btn.disabled = !match;
+  btn.style.opacity = match ? '1' : '.4';
+  btn.style.cursor = match ? 'pointer' : 'not-allowed';
+}
+async function confirmDel() {
+  const val = document.getElementById('del-name-input').value.trim();
+  if (val !== _delName) return;
+  closeDel();
+  const r = await fetch(`/api/bots/${_delId}`, {method:'DELETE'});
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) await loadBots();
+}
+
+// ── Live log streaming ─────────────────────────────
+function viewLogs(id, name) {
+  showPage('logs');
+  document.getElementById('log-bot-select').value = id;
+  document.getElementById('logs-bot-name').textContent = name;
+  startLiveLog(id);
+}
+
+function switchLiveBot() {
+  const id = document.getElementById('log-bot-select').value;
+  const name = allBots.find(b => b.id === id)?.name || '';
+  if (id) {
+    document.getElementById('logs-bot-name').textContent = name;
+    startLiveLog(id);
+  }
+}
+
+function startLiveLog(botId) {
+  if (liveInterval) clearInterval(liveInterval);
+  liveLogBotId = botId;
+  liveTs = 0;
+  document.getElementById('logs-body').innerHTML = '<span style="color:var(--muted2)">Loading logs...</span>';
+  document.getElementById('live-indicator').style.display = 'none';
+  // Load DB logs first
+  fetch(`/api/bots/${botId}/logs`).then(r => r.json()).then(d => {
+    if (!d.success) return;
+    const body = document.getElementById('logs-body');
+    if (!d.logs.length) {
+      body.innerHTML = '<span style="color:var(--muted2)">No logs yet. Start the bot.</span>';
+    } else {
+      body.innerHTML = d.logs.map(l => logLine(l.created_at, l.message, l.level)).join('');
+      body.scrollTop = body.scrollHeight;
+    }
+    // Then start live polling
+    liveTs = Date.now() - 5000;
+    liveInterval = setInterval(() => pollLive(botId), 1500);
+  });
+}
+
+async function pollLive(botId) {
+  if (liveLogBotId !== botId) return;
+  try {
+    const r = await fetch(`/api/bots/${botId}/live?since=${liveTs}`);
+    const d = await r.json();
+    if (!d.success) return;
+    const ind = document.getElementById('live-indicator');
+    ind.style.display = d.running ? 'inline-flex' : 'none';
+    if (d.logs && d.logs.length) {
+      const body = document.getElementById('logs-body');
+      const atBottom = body.scrollHeight - body.scrollTop <= body.clientHeight + 50;
+      d.logs.forEach(l => {
+        body.innerHTML += logLine(new Date(l.ts).toLocaleTimeString(), l.message, l.level);
+        if (l.ts > liveTs) liveTs = l.ts;
+      });
+      if (atBottom) body.scrollTop = body.scrollHeight;
+    }
+  } catch {}
+}
+
+function logLine(time, msg, level) {
+  return `<div class="log-entry"><span class="log-time">${esc(String(time))}</span><span class="log-${level} log-msg">${esc(msg)}</span></div>`;
+}
+
+function clearLogsDisplay() {
+  document.getElementById('logs-body').innerHTML = '<span style="color:var(--muted2)">Cleared display (logs still saved).</span>';
+}
+
+// ── Security ───────────────────────────────────────
+async function loadSecurity() {
+  const r = await fetch('/api/security/attacks');
+  const d = await r.json();
+  const el = document.getElementById('security-content');
+  if (!d.success) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:.8rem;padding:20px 0">${d.message || 'No access'}</div>`;
+    return;
+  }
+  const topHtml = d.topAttackers.length ? `
+    <div style="margin-bottom:24px">
+      <div class="section-heading" style="margin-bottom:12px">Top Attackers</div>
+      <table class="security-table">
+        <thead><tr>
+          <th>IP Address</th><th>Country</th><th>Attempts</th><th>Max Hits/min</th><th>Last Seen</th>
+        </tr></thead>
+        <tbody>${d.topAttackers.map(a => `<tr>
+          <td class="ip-cell">${esc(a.ip)}</td>
+          <td><span class="country-badge">${esc(a.country)}</span></td>
+          <td>${a.attempts}</td><td>${a.max_hits}</td><td>${esc(a.last_seen)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:20px 0">No attacks logged yet. Your platform is clean. 🛡️</div>';
+
+  const recentHtml = d.attacks.length ? `
+    <div>
+      <div class="section-heading" style="margin-bottom:12px">Recent Attack Log</div>
+      <table class="security-table">
+        <thead><tr>
+          <th>IP</th><th>Country</th><th>Hits/min</th><th>Path</th><th>CF Ray</th><th>Time</th>
+        </tr></thead>
+        <tbody>${d.attacks.map(a => `<tr>
+          <td class="ip-cell">${esc(a.ip)}</td>
+          <td><span class="country-badge">${esc(a.country)}</span></td>
+          <td style="color:var(--red)">${a.hits}</td>
+          <td>${esc(a.path||'-')}</td>
+          <td style="color:var(--muted2)">${esc(a.cf_ray||'-')}</td>
+          <td>${esc(a.created_at)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '';
+
+  el.innerHTML = topHtml + recentHtml;
+}
+
+// ── Billing ────────────────────────────────────────
+function fmtTimeLeft(iso) {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'Expired';
+  const days = Math.floor(ms / 86400000);
+  if (days >= 1) return `${days}d left`;
+  const hours = Math.floor(ms / 3600000);
+  if (hours >= 1) return `${hours}h left`;
+  return `${Math.max(0, Math.floor(ms / 60000))}m left`;
+}
+
+function fmtDate(s) { return s ? String(s).replace('T', ' ').slice(0, 16) : '—'; }
+
+async function buildBilling() {
+  const isPremium = currentUser && currentUser.plan === 'premium';
+  const expiresAt = currentUser && currentUser.premium_expires_at;
+
+  let currentPlanHtml;
+  if (isPremium) {
+    const expired = expiresAt && (new Date(expiresAt).getTime() - Date.now()) <= 0;
+    currentPlanHtml = `
+      <div style="background:var(--surface);border:1px solid var(--border);padding:36px;max-width:420px">
+        <div class="billing-name">Current Plan</div>
+        <div class="billing-price">Premium</div>
+        <div class="billing-period">${expiresAt ? (expired ? 'Expired' : fmtTimeLeft(expiresAt)) : 'No expiry set'}</div>
+        ${expiresAt ? `<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Renews / ends: ${fmtDate(expiresAt)}</div>` : ''}
+        <div style="font-size:.75rem;color:var(--muted);font-weight:var(--font-ui)">10 bots · 15 GB storage · Priority support</div>
+        ${expired ? `<a href="https://t.me/Karl08901" target="_blank" rel="noopener" class="btn-sm btn-sm-white" style="display:flex;width:100%;justify-content:center;text-decoration:none;padding:11px;margin-top:16px">💬 Renew with Karl</a>` : ''}
+      </div>
+    `;
+  } else {
+    currentPlanHtml = `
+    <div class="billing-grid">
+      <div class="billing-card">
+        <div class="billing-name">Current Plan</div>
+        <div class="billing-price">Free</div>
+        <div class="billing-period">Forever</div>
+        <ul class="billing-feats">
+          <li>Bots <strong>3</strong></li>
+          <li>Storage <strong>2.5 GB</strong></li>
+          <li>Support <strong>Standard</strong></li>
+        </ul>
+      </div>
+      <div class="billing-card" style="background:var(--surface)">
+        <div class="billing-name">Upgrade to Premium</div>
+        <div class="billing-price">₱250</div>
+        <div class="billing-period">Custom durations · ask Nix</div>
+        <ul class="billing-feats">
+          <li>Bots <strong>10</strong></li>
+          <li>Storage <strong>15 GB</strong></li>
+          <li>Support <strong>Priority</strong></li>
+        </ul>
+        <a href="https://t.me/Karl08901" target="_blank" rel="noopener" class="btn-sm btn-sm-white" style="display:flex;width:100%;justify-content:center;text-decoration:none;padding:11px">💬 Click Here to Message Karl</a>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:10px;font-weight:var(--font-ui)">Tell Nix your username and the plan you want — payment and upgrade are handled directly over Telegram.</div>
+      </div>
+    </div>
+  `;
+  }
+
+  document.getElementById('billing-content').innerHTML = currentPlanHtml + `
+    <div class="section-head" style="margin-top:28px"><div class="section-heading">Billing History</div></div>
+    <div id="billing-history-list">Loading…</div>
+  `;
+
+  try {
+    const r = await fetch('/api/me/billing');
+    const d = await r.json();
+    const el = document.getElementById('billing-history-list');
+    if (!d.success || !d.history.length) {
+      el.innerHTML = '<div class="activity-empty">No billing history yet.</div>';
+      return;
+    }
+    el.innerHTML = `<table class="file-table" style="max-width:680px">
+      <thead><tr><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+        ${d.history.map(h => {
+          let status = '—';
+          if (h.action === 'grant' && h.expires_at) {
+            status = (new Date(h.expires_at).getTime() - Date.now()) <= 0
+              ? '<span style="color:var(--red)">Expired</span>'
+              : `<span style="color:var(--green)">${fmtTimeLeft(h.expires_at)}</span>`;
+          } else if (h.action === 'remove') {
+            status = '<span style="color:var(--red)">Removed</span>';
+          }
+          return `<tr><td>${esc(h.plan_label)}</td><td>${esc(h.amount_label || '—')}</td><td>${fmtDate(h.created_at)}</td><td>${status}</td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  } catch {
+    const el = document.getElementById('billing-history-list');
+    if (el) el.innerHTML = '<div class="activity-empty">Could not load billing history.</div>';
+  }
+}
+
+// ── Utils ──────────────────────────────────────────
+function goToFiles() {
+  if (allBots.length === 1) {
+    window.location.href = `/bot/view/${allBots[0].id}?tab=files`;
+  } else if (allBots.length > 1) {
+    showPage('dashboard');
+    toast('Open a bot below, then use its Files tab', 'info');
+  } else {
+    toast('Create a bot first — then you can manage its files', 'error');
+  }
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ── Proxies ────────────────────────────────────────
+async function loadProxies() {
+  const previewEl = document.getElementById('proxy-preview');
+  previewEl.textContent = 'Loading...';
+  try {
+    const r = await fetch('/api/proxies');
+    const d = await r.json();
+    if (!d.success) { previewEl.textContent = 'Failed to load proxies.'; return; }
+    document.getElementById('proxy-stat-total').textContent = d.total;
+    document.getElementById('proxy-stat-shared').textContent = `${d.shared_count} / ${d.shared_limit}`;
+    document.getElementById('proxy-stat-assigned').textContent = d.assigned_count;
+    document.getElementById('proxy-stat-alive').textContent = d.alive ?? '–';
+    document.getElementById('proxy-stat-dead').textContent = d.dead ?? '–';
+    previewEl.textContent = d.preview.length ? d.preview.join('\n') : 'No proxies available yet — request some below.';
+  } catch (e) {
+    previewEl.textContent = 'Failed to load proxies.';
+  }
+  renderProxyBotToggles();
+}
+
+function renderProxyBotToggles() {
+  const c = document.getElementById('proxy-bots-container');
+  if (!allBots.length) {
+    c.innerHTML = '<div class="empty-state" style="padding:24px">Create a bot first — then you can turn its proxy rotator on.</div>';
+    return;
+  }
+  c.innerHTML = allBots.map(b => `
+    <div class="proxy-bot-row">
+      <div class="proxy-bot-name">${esc(b.name)}</div>
+      <label class="switch">
+        <input type="checkbox" ${b.proxy_enabled ? 'checked' : ''} onchange="toggleBotProxy('${b.id}', this.checked)">
+        <span class="switch-track"></span>
+      </label>
+    </div>
+  `).join('');
+}
+
+async function toggleBotProxy(id, enabled) {
+  const r = await fetch(`/api/bots/${id}/proxy`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ enabled }) });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadBots(); renderProxyBotToggles(); }
+}
+
+async function requestMoreProxies() {
+  const message = document.getElementById('proxy-request-msg').value.trim();
+  const r = await fetch('/api/proxies/request', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ message }) });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) document.getElementById('proxy-request-msg').value = '';
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const titles = {dashboard:'Dashboard',logs:'Live Logs',proxies:'Proxies',security:'Security',billing:'Billing'};
+  document.getElementById('topbar-title').textContent = titles[name] || 'Dashboard';
+  if (name === 'security') loadSecurity();
+  if (name === 'proxies') loadProxies();
+  if (name === 'envvars') { populateEnvBotSelect(); loadEnvVars(); }
+  if (name !== 'logs' && liveInterval) { clearInterval(liveInterval); liveInterval = null; }
+  closeSidebar();
+}
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+function renderTrialBanner(user) {
+  const el = document.getElementById('trial-banner');
+  if (!el) return;
+  if (user.plan === 'premium') {
+    if (!user.premium_expires_at) { el.style.display = 'none'; return; }
+    renderPremiumCountdown(user.premium_expires_at);
+    if (premiumCountdownInterval) clearInterval(premiumCountdownInterval);
+    premiumCountdownInterval = setInterval(() => renderPremiumCountdown(user.premium_expires_at), 1000);
+    return;
+  }
+  if (premiumCountdownInterval) { clearInterval(premiumCountdownInterval); premiumCountdownInterval = null; }
+  const days = user.trial_days_left;
+  if (days === null || days === undefined) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  if (days <= 0) {
+    el.className = 'trial-banner expired';
+    el.innerHTML = `<div class="trial-text expired">⛔ <strong>Your free trial has expired.</strong> Your bots have been stopped. Upgrade to a paid plan to continue hosting.</div><a href="https://t.me/Karl08901" target="_blank" class="btn-sm btn-sm-white" style="white-space:nowrap;text-decoration:none">💬 Upgrade Now</a>`;
+  } else if (days <= 2) {
+    el.className = 'trial-banner';
+    el.innerHTML = `<div><div class="trial-days">${days}d</div></div><div class="trial-text">⚠️ <strong>Trial ending soon.</strong> You have ${days} day${days !== 1 ? 's' : ''} left on your free trial. After it ends, your bots will be stopped until you upgrade.</div><a href="https://t.me/Karl08901" target="_blank" class="btn-sm btn-sm-white" style="white-space:nowrap;text-decoration:none">💬 Upgrade</a>`;
+  } else {
+    el.className = 'trial-banner';
+    el.innerHTML = `<div><div class="trial-days">${days}d</div></div><div class="trial-text">🕐 <strong>Free trial active.</strong> ${days} day${days !== 1 ? 's' : ''} remaining. Up to 3 bots, all features included. Upgrade any time for unlimited hosting.</div>`;
+  }
+}
+
+let premiumCountdownInterval = null;
+
+function renderPremiumCountdown(expiresAtIso) {
+  const el = document.getElementById('trial-banner');
+  if (!el) return;
+  const ms = new Date(expiresAtIso).getTime() - Date.now();
+  if (ms <= 0) {
+    el.style.display = 'flex';
+    el.className = 'trial-banner expired';
+    el.innerHTML = `<div class="trial-text expired">⛔ <strong>Your Premium plan has expired.</strong> Renew to keep your bots running uninterrupted.</div><a href="https://t.me/Karl08901" target="_blank" class="btn-sm btn-sm-white" style="white-space:nowrap;text-decoration:none">💬 Renew</a>`;
+    if (premiumCountdownInterval) { clearInterval(premiumCountdownInterval); premiumCountdownInterval = null; }
+    return;
+  }
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  el.style.display = 'flex';
+  el.className = 'trial-banner';
+  const big = days > 0 ? `${days}d` : (hours > 0 ? `${hours}h` : `${minutes}m`);
+  const detail = days > 0
+    ? `${days}d ${hours}h ${minutes}m remaining`
+    : `${hours}h ${minutes}m ${seconds}s remaining`;
+  el.innerHTML = `<div><div class="trial-days">${big}</div></div><div class="trial-text">✨ <strong>Premium active.</strong> ${detail} on your current plan.</div>`;
+}
+
+function fmtBytes(b) {
+  if (!b) return '0 B';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+
+// ── Announcements ──────────────────────────────────
+async function loadAnnouncements() {
+  try {
+    const r = await fetch('/api/announcements');
+    const d = await r.json();
+    if (!d.success || !d.announcements.length) return;
+    const banner = document.getElementById('announcement-banner');
+    // Show latest active announcement
+    const a = d.announcements[0];
+    const dismissed = sessionStorage.getItem('dismissed_ann_' + a.id);
+    if (dismissed) return;
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="announcement-banner">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#93c5fd;margin-bottom:4px">Announcement</div>
+          <div style="font-size:.85rem;font-weight:500;color:var(--white);margin-bottom:4px">${esc(a.title)}</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">${esc(a.body)}</div>
+          ${a.photo_url ? `<img src="${esc(a.photo_url)}" class="announcement-photo" onerror="this.style.display='none'">` : ''}
+        </div>
+        <button style="background:none;border:none;color:var(--muted2);font-size:1rem;cursor:pointer;flex-shrink:0;padding:2px 4px" onclick="sessionStorage.setItem('dismissed_ann_${a.id}','1');document.getElementById('announcement-banner').style.display='none'">×</button>
+      </div>
+    </div>`;
+  } catch {}
+}
+
+// ── Env Vars ───────────────────────────────────────
+let _envBotId = null;
+async function loadEnvVars() {
+  const sel = document.getElementById('env-bot-select');
+  _envBotId = sel.value;
+  const list = document.getElementById('env-list');
+  if (!_envBotId) { list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:20px 0">Select a bot to manage its environment variables.</div>'; return; }
+  try {
+    const r = await fetch(`/api/bots/${_envBotId}/env`);
+    const d = await r.json();
+    if (!d.success) { list.innerHTML = `<div style="color:var(--muted);font-size:.8rem">${d.message}</div>`; return; }
+    if (!d.vars.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:20px 0">No variables set. Add one above.</div>';
+      return;
+    }
+    list.innerHTML = d.vars.map(v => `<div class="env-row">
+      <div class="env-key">${esc(v.key)}</div>
+      <div class="env-val">${esc(v.value)}</div>
+      <button class="env-del" onclick="deleteEnvVar('${esc(v.key)}')" title="Delete">×</button>
+    </div>`).join('');
+  } catch { list.innerHTML = '<div style="color:var(--muted);font-size:.8rem">Failed to load variables.</div>'; }
+}
+
+async function saveEnvVar() {
+  if (!_envBotId) return toast('Select a bot first', 'error');
+  const key = document.getElementById('env-key').value.trim().toUpperCase();
+  const value = document.getElementById('env-val').value;
+  if (!key) return toast('Key is required', 'error');
+  const r = await fetch(`/api/bots/${_envBotId}/env`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ key, value }) });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) { document.getElementById('env-key').value = ''; document.getElementById('env-val').value = ''; loadEnvVars(); }
+}
+
+async function deleteEnvVar(key) {
+  if (!_envBotId) return;
+  const r = await fetch(`/api/bots/${_envBotId}/env`, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ key }) });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) loadEnvVars();
+}
+
+function populateEnvBotSelect() {
+  const sel = document.getElementById('env-bot-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Select a bot...</option>';
+  allBots.forEach(b => { const o = document.createElement('option'); o.value = b.id; o.textContent = b.name; sel.appendChild(o); });
+  if (prev) { sel.value = prev; }
+}
+
+// ── Uptime formatters ──────────────────────────────
+function fmtUptime(ms) {
+  if (!ms || ms < 0) return '';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function fmtUptimeFull(ms) {
+  if (!ms || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${sec}s`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+// Tick uptime counters on all visible bot cards every second
+setInterval(() => {
+  document.querySelectorAll('[id^="uptime-"]').forEach(el => {
+    const start = parseInt(el.dataset.start);
+    const status = el.dataset.status;
+    if (status === 'running' && start) {
+      el.textContent = fmtUptimeFull(Date.now() - start);
+    }
+  });
+}, 1000);
+
+// ── Activity Feed ──────────────────────────────────
+async function loadActivity() {
+  const el = document.getElementById('activity-feed');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/bots/activity');
+    const d = await r.json();
+    if (!d.success || !d.entries.length) {
+      el.innerHTML = '<div class="activity-empty">No activity yet — start a bot to see events here.</div>';
+      return;
+    }
+    el.innerHTML = d.entries.slice(0, 30).map(e => {
+      const ago = fmtAgo(e.created_at);
+      return `<div class="activity-row">
+        <div class="activity-dot ${e.level || 'info'}"></div>
+        <div class="activity-body">
+          <div class="activity-bot">${esc(e.bot_name || 'System')}</div>
+          <div class="activity-msg">${esc(e.message)}</div>
+        </div>
+        <div class="activity-time">${ago}</div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div class="activity-empty">Could not load activity.</div>';
+  }
+}
+
+// SQLite's CURRENT_TIMESTAMP returns UTC time formatted as "YYYY-MM-DD HH:MM:SS"
+// with no timezone marker. Passed straight to `new Date()`, browsers treat it
+// as LOCAL time instead of UTC, which skews every relative time by exactly the
+// user's UTC offset (e.g. a bot created seconds ago shows as "8h ago" for a
+// UTC+8 user). Normalize to a real ISO UTC string before parsing.
+function parseServerDate(s) {
+  if (!s) return null;
+  let str = String(s);
+  if (!/[zZ]|[+-]\d\d:?\d\d$/.test(str)) {
+    str = str.replace(' ', 'T') + 'Z';
+  }
+  return new Date(str);
+}
+
+function fmtAgo(isoStr) {
+  if (!isoStr) return '';
+  const s = Math.floor((Date.now() - parseServerDate(isoStr).getTime()) / 1000);
+  if (s < 0) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+}
+
+// Auto-refresh bot list every 8 seconds
+setInterval(loadBots, 8000);
+
+// Hook populateEnvBotSelect into loadBots
+const _origLoadBots = loadBots;
+
+init();
+loadAnnouncements();
+loadActivity();
+
+</script>
+<script src="/assets/tech-bg.js"></script>
+<script>
+(function () {
+  try {
+    const el = document.getElementById('dash-bg');
+    if (window.TechBackdrop && el) new TechBackdrop(el, { density: 'ambient' });
+  } catch (err) {
+    console.warn('[KARL] Background animation failed to start:', err);
+  }
+})();
+</script>
+</body>
+</html>
