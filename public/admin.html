@@ -1,0 +1,264 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KARL — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--surface:#0d1120;--border:#1c2238;--border2:#252d45;--white:#eef0f7;--muted:#5a6285;--muted2:#2e3554;--accent:#f5a623;--green:#22c55e;--red:#ef4444;--yellow:#eab308}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:3px;color:var(--accent);font-size:.95rem}
+.btn{padding:7px 14px;border-radius:3px;font-size:.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:none;font-family:'JetBrains Mono',monospace;transition:all .15s;text-decoration:none;display:inline-block}
+.btn-accent{background:var(--accent);color:#07090f}.btn-accent:hover{background:#f0b84a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-red{background:transparent;border:1px solid #ef444440;color:var(--red)}.btn-red:hover{background:#ef444420}
+.btn-green{background:transparent;border:1px solid #22c55e40;color:var(--green)}.btn-green:hover{background:#22c55e20}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px}
+.tab{padding:10px 20px;font-size:.68rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--white);border-bottom-color:var(--accent)}
+.panel{display:none}.panel.active{display:block}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:18px}
+.stat-num{font-size:2rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.stat-lbl{font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;padding:10px 12px;font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--surface)}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:.62rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge-admin{background:rgba(245,166,35,.15);color:var(--accent)}
+.badge-banned{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-free{background:rgba(90,98,133,.15);color:var(--muted)}
+.badge-running{background:rgba(34,197,94,.15);color:var(--green)}
+.token-box{background:#020409;border:1px solid var(--border);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;max-height:300px;overflow-y:auto;white-space:pre;margin-top:12px}
+.gen-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.gen-row input{background:var(--surface);border:1px solid var(--border2);color:var(--white);padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;border-radius:3px;width:80px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px}
+.card-title{font-size:.65rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.dur-btn{padding:7px 12px;border-radius:4px;font-size:.65rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:transparent;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.dur-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dur-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,166,35,.12)}
+</style></head><body>
+<nav>
+  <div class="logo">KARL <span style="font-size:.65rem;color:var(--muted)">ADMIN</span></div>
+  <a href="/dashboard" class="btn btn-outline">← Dashboard</a>
+</nav>
+<main>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('stats')">Stats</div>
+    <div class="tab" onclick="switchTab('users')">Users</div>
+    <div class="tab" onclick="switchTab('bots')">Bots</div>
+    <div class="tab" onclick="switchTab('tokens')">Tokens</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="panel active" id="panel-stats">
+    <div class="stats-grid" id="stats-grid">Loading...</div>
+  </div>
+
+  <!-- Users -->
+  <div class="panel" id="panel-users">
+    <div style="overflow-x:auto">
+    <table id="users-table">
+      <thead><tr><th>Username</th><th>Role</th><th>Plan</th><th>Bots</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="users-tbody"><tr><td colspan="6" style="color:var(--muted);text-align:center">Loading...</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Bots -->
+  <div class="panel" id="panel-bots">
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Name</th><th>Owner</th><th>Status</th><th>Main File</th></tr></thead>
+      <tbody id="bots-tbody"><tr><td colspan="4" style="color:var(--muted);text-align:center">Loading...</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Tokens -->
+  <div class="panel" id="panel-tokens">
+    <div class="card">
+      <div class="card-title">⚡ Generate Activation Tokens</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:16px">
+        <div>
+          <div style="font-size:.6rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Quantity</div>
+          <input type="number" id="token-count" value="1" min="1" max="50" style="background:var(--surface);border:1px solid var(--border2);color:var(--white);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:.85rem;outline:none;border-radius:4px;width:80px">
+        </div>
+        <div>
+          <div style="font-size:.6rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Duration</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="dur-btns">
+            <button class="dur-btn active" data-dur="1h" onclick="selDur(this)">2h</button>
+            <button class="dur-btn" data-dur="3d" onclick="selDur(this)">3d</button>
+            <button class="dur-btn" data-dur="7d" onclick="selDur(this)">7d</button>
+            <button class="dur-btn" data-dur="1mon" onclick="selDur(this)">1 Month</button>
+            <button class="dur-btn" data-dur="lifetime" onclick="selDur(this)">♾ Lifetime</button>
+          </div>
+        </div>
+        <button class="btn btn-accent" onclick="genTokens()" style="height:38px">Generate</button>
+      </div>
+      <div id="gen-output" style="display:none">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;letter-spacing:.5px">Generated — share with users:</div>
+        <div class="token-box" id="gen-box"></div>
+        <button class="btn btn-outline" style="margin-top:10px" onclick="copyTokens()">📋 Copy All</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎟 All Tokens</div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Token</th><th>Duration</th><th>Expires</th><th>Telegram</th><th>Used By</th><th></th></tr></thead>
+        <tbody id="tokens-tbody"><tr><td colspan="6" style="color:var(--muted);text-align:center">Loading...</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let currentTab = 'stats';
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i)=>{ el.classList.toggle('active', ['stats','users','bots','tokens'][i]===t); });
+  document.querySelectorAll('.panel').forEach((el,i)=>{ el.classList.toggle('active', ['stats','users','bots','tokens'][i]===t); });
+  currentTab = t;
+  loadTab(t);
+}
+
+async function loadTab(t) {
+  if (t==='stats') loadStats();
+  else if (t==='users') loadUsers();
+  else if (t==='bots') loadBots();
+  else if (t==='tokens') loadTokens();
+}
+
+async function loadStats() {
+  const r = await fetch('/api/admin/stats').then(r=>r.json());
+  if (!r.success) return;
+  const s = r.stats;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${s.totalUsers}</div><div class="stat-lbl">Total Users</div></div>
+    <div class="stat-card"><div class="stat-num">${s.totalBots}</div><div class="stat-lbl">Total Bots</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${s.runningBots}</div><div class="stat-lbl">Running</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${s.bannedUsers}</div><div class="stat-lbl">Banned</div></div>
+    <div class="stat-card"><div class="stat-num">${s.unusedTokens}</div><div class="stat-lbl">Unused Tokens</div></div>
+  `;
+}
+
+async function loadUsers() {
+  const r = await fetch('/api/admin/users').then(r=>r.json());
+  const tbody = document.getElementById('users-tbody');
+  if (!r.success) { tbody.innerHTML='<tr><td colspan="6" style="color:var(--red)">Failed to load</td></tr>'; return; }
+  tbody.innerHTML = r.users.map(u=>`
+    <tr>
+      <td><strong>${esc(u.username)}</strong></td>
+      <td><span class="badge badge-${u.role}">${u.role}</span></td>
+      <td><span class="badge badge-free">${u.plan||'free'}</span></td>
+      <td>${u.bot_count}</td>
+      <td>${u.banned?'<span class="badge badge-banned">Banned</span>':'<span style="color:var(--green);font-size:.72rem">Active</span>'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        ${u.role!=='admin'?`
+          ${u.banned?`<button class="btn btn-green" onclick="unbanUser(${u.id})">Unban</button>`:`<button class="btn btn-red" onclick="banUser(${u.id})">Ban</button>`}
+          <button class="btn btn-outline" onclick="genMagicLink(${u.id})">🔗 Link</button>
+          <button class="btn btn-red" onclick="deleteUser(${u.id},'${esc(u.username)}')">Del</button>
+        `:'<span style="color:var(--muted);font-size:.7rem">Admin</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+async function banUser(id) {
+  const reason = prompt('Ban reason (optional):') || '';
+  const r = await fetch(`/api/admin/users/${id}/ban`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})}).then(r=>r.json());
+  if (r.success) loadUsers(); else alert(r.message);
+}
+async function unbanUser(id) {
+  await fetch(`/api/admin/users/${id}/unban`,{method:'POST'});
+  loadUsers();
+}
+async function deleteUser(id, name) {
+  if (!confirm(`Delete user "${name}"? All their bots will be removed.`)) return;
+  await fetch(`/api/admin/users/${id}`,{method:'DELETE'});
+  loadUsers();
+}
+async function genMagicLink(id) {
+  const r = await fetch('/api/admin/magic-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id})}).then(r=>r.json());
+  if (r.success) { prompt('Magic login link (valid 24h):', r.link); }
+  else alert(r.message);
+}
+
+async function loadBots() {
+  const r = await fetch('/api/admin/bots').then(r=>r.json());
+  const tbody = document.getElementById('bots-tbody');
+  if (!r.success) return;
+  tbody.innerHTML = r.bots.map(b=>`
+    <tr>
+      <td><a href="/bot/${b.id}" style="color:var(--accent);text-decoration:none">${esc(b.name)}</a></td>
+      <td>${esc(b.username)}</td>
+      <td>${b.live?'<span class="badge badge-running">Running</span>':'<span style="color:var(--muted);font-size:.72rem">Stopped</span>'}</td>
+      <td style="font-family:JetBrains Mono,monospace;font-size:.72rem">${b.main_file||'main.py'}</td>
+    </tr>`).join('');
+}
+
+const DUR_LABEL = {'1h':'2h','3d':'3 Days','7d':'7 Days','1mon':'1 Month','lifetime':'♾ Lifetime'};
+const DUR_COLOR = {'1h':'#f59e0b','3d':'#3b82f6','7d':'#8b5cf6','1mon':'#ec4899','lifetime':'#22c55e'};
+let selectedDur = '1h';
+
+function selDur(el) {
+  document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  selectedDur = el.dataset.dur;
+}
+
+async function loadTokens() {
+  const r = await fetch('/api/admin/tokens').then(r=>r.json());
+  const tbody = document.getElementById('tokens-tbody');
+  if (!r.success) return;
+  const now = new Date();
+  tbody.innerHTML = r.tokens.map(t => {
+    const expired = t.expires_at && new Date(t.expires_at) < now;
+    const expiresStr = !t.expires_at ? '<span style="color:#22c55e;font-size:.68rem">Never</span>'
+      : expired ? '<span style="color:#ef4444;font-size:.68rem">Expired</span>'
+      : `<span style="font-size:.68rem;color:var(--muted)">${new Date(t.expires_at).toLocaleDateString()}</span>`;
+    const dur = t.duration || '1d';
+    const color = DUR_COLOR[dur] || '#f5a623';
+    const label = DUR_LABEL[dur] || dur;
+    return `<tr>
+      <td style="font-family:JetBrains Mono,monospace;font-size:.68rem;color:${t.used_by?'var(--muted)':'var(--white)'}">${t.token}</td>
+      <td><span style="background:${color}22;color:${color};padding:2px 8px;border-radius:3px;font-size:.6rem;font-weight:700;font-family:JetBrains Mono,monospace">${label}</span></td>
+      <td>${expiresStr}</td>
+      <td style="font-size:.7rem;color:var(--muted)">${t.telegram_username ? '@'+esc(t.telegram_username) : '—'}</td>
+      <td style="font-size:.72rem">${t.used_by_username ? esc(t.used_by_username) : '<span style="color:var(--green)">Available</span>'}</td>
+      <td>${!t.used_by && !expired ? `<button class="btn btn-red" onclick="deleteToken(${t.id})">Del</button>` : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No tokens yet</td></tr>';
+}
+
+async function genTokens() {
+  const count = parseInt(document.getElementById('token-count').value)||1;
+  const r = await fetch('/api/admin/tokens/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({count, duration: selectedDur})}).then(r=>r.json());
+  if (r.success) {
+    document.getElementById('gen-output').style.display='block';
+    const label = DUR_LABEL[selectedDur] || selectedDur;
+    const lines = r.tokens.map(t => `${t.token}  [${label}]`).join('\n');
+    document.getElementById('gen-box').textContent = lines;
+    loadTokens();
+  }
+}
+
+function copyTokens() {
+  const text = r.tokens ? r.tokens.map(t=>t.token).join('\n') : document.getElementById('gen-box').textContent.split('\n').map(l=>l.split('  ')[0]).join('\n');
+  navigator.clipboard?.writeText(document.getElementById('gen-box').textContent);
+}
+
+async function deleteToken(id) {
+  await fetch(`/api/admin/tokens/${id}`,{method:'DELETE'});
+  loadTokens();
+}
+
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+loadStats();
+</script>
+</body></html>
