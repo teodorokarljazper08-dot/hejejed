@@ -1,8 +1,18 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "python312", "python312Packages.pip"]
+nixPkgs = [
+  "nodejs_20",
+  "python312",
+  "python312Packages.pip",
+  "python312Packages.setuptools",
+  "gcc",
+  "gnumake",
+  "pkg-config"
+]
 
 [phases.build]
-cmds = ["npm install"]
+cmds = [
+  "npm install --build-from-source"
+]
 
 [start]
 cmd = "node server.js"
