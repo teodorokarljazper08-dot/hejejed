@@ -27,4 +27,33 @@ router.post('/register', (req, res) => {
 
   const tk = db.prepare('SELECT * FROM activation_tokens WHERE token = ? AND used_by IS NULL').get(token.trim().toUpperCase());
   if (!tk) return res.json({ success: false, message: 'Invalid or already used activation token' });
-  
+
+  req.session.save(() => res.json({ success: true, redirect: '/dashboard' }));
+});
+
+router.post('/logout', (req, res) => {
+  req.session.destroy(() => res.json({ success: true, redirect: '/login' }));
+});
+
+router.get('/magic', (req, res) => {
+  const { t } = req.query;
+  if (!t) return res.redirect('/login?error=invalid');
+  const link = db.prepare('SELECT * FROM login_links WHERE token = ? AND used = 0 AND expires_at > CURRENT_TIMESTAMP').get(t);
+  if (!link) return res.redirect('/login?error=expired');
+  db.prepare('UPDATE login_links SET used = 1 WHERE id = ?').run(link.id);
+  req.session.userId = link.user_id;
+  req.session.save(() => res.redirect('/dashboard'));
+});
+
+router.get('/check-token', (req, res) => {
+  const token = String(req.query.token || '').trim().toUpperCase();
+  if (!token) return res.json({ valid: false, message: 'No token provided' });
+  const row = db.prepare('SELECT used_by, expires_at, duration FROM activation_tokens WHERE token = ?').get(token);
+  if (!row) return res.json({ valid: false, message: 'Token not found' });
+  if (row.used_by) return res.json({ valid: false, message: 'Token already used' });
+  if (row.expires_at && new Date(row.expires_at) < new Date())
+    return res.json({ valid: false, message: 'Token has expired' });
+  return res.json({ valid: true, message: 'Token is valid ✓', duration: row.duration });
+});
+
+module.exports = router;
