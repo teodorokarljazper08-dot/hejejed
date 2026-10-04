@@ -1,0 +1,534 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KARL — Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--surface:#0d1120;--border:#1c2238;--border2:#252d45;--white:#eef0f7;--muted:#5a6285;--muted2:#2e3554;--accent:#f5a623;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:3px;color:var(--accent);font-size:.95rem}
+.btn{padding:8px 16px;border-radius:3px;font-size:.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:none;font-family:'JetBrains Mono',monospace;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-accent{background:var(--accent);color:#07090f}.btn-accent:hover{background:#f0b84a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-red{background:transparent;border:1px solid #ef444440;color:var(--red)}.btn-red:hover{background:#ef444420}
+.btn-green{background:transparent;border:1px solid #22c55e40;color:var(--green)}.btn-green:hover{background:#22c55e20}
+.btn-blue{background:transparent;border:1px solid #3b82f640;color:var(--blue)}.btn-blue:hover{background:#3b82f620}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+main{max-width:1060px;margin:0 auto;padding:32px 24px}
+.bot-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.bot-title{font-size:1.3rem;font-weight:600}
+.bot-sub{font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.status-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.68rem;font-weight:500;font-family:'JetBrains Mono',monospace}
+.chip-running{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+.chip-stopped{background:rgba(90,98,133,.1);border:1px solid var(--border2);color:var(--muted)}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.dot-running{background:var(--green);box-shadow:0 0 6px var(--green);animation:glow 2s infinite}
+.dot-stopped{background:var(--muted2)}
+@keyframes glow{0%,100%{box-shadow:0 0 4px var(--green)}50%{box-shadow:0 0 12px var(--green)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px}
+.card-title{font-size:.65rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.log-box{background:#020409;border:1px solid var(--border);border-radius:4px;padding:16px;height:380px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.7;color:#94a3b8;white-space:pre-wrap;word-break:break-all}
+.log-box::-webkit-scrollbar{width:6px}
+.log-box::-webkit-scrollbar-track{background:transparent}
+.log-box::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.zip-notice{background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.2);border-radius:4px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.zip-notice-text{font-size:.82rem;color:var(--accent)}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.info-item label{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+.info-item value{font-size:.82rem;font-family:'JetBrains Mono',monospace}
+
+/* ── File Manager ── */
+.fm-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.fm-path{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);padding:6px 10px;background:#020409;border:1px solid var(--border);border-radius:3px;flex:1;min-width:120px}
+.file-list{background:#020409;border:1px solid var(--border);border-radius:4px;min-height:180px;overflow:hidden}
+.file-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-family:'JetBrains Mono',monospace;font-size:.73rem}
+.file-row:last-child{border-bottom:none}
+.file-row:hover{background:rgba(255,255,255,.03)}
+.file-row.selected{background:rgba(245,166,35,.07);border-left:2px solid var(--accent)}
+.file-icon{width:18px;text-align:center;font-size:.85rem;flex-shrink:0}
+.file-name{flex:1;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-size{color:var(--muted);font-size:.65rem;white-space:nowrap}
+.file-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+.file-row:hover .file-actions{opacity:1}
+.fa-btn{background:transparent;border:none;cursor:pointer;padding:2px 5px;border-radius:2px;font-size:.75rem;line-height:1;color:var(--muted);transition:all .1s}
+.fa-btn:hover.edit{color:var(--accent)}
+.fa-btn:hover.del{color:var(--red)}
+.fa-btn:hover.ren{color:var(--blue)}
+.fm-empty{padding:28px;text-align:center;color:var(--muted);font-size:.75rem}
+
+/* ── Editor Modal ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:6px;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.modal-title{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:2px}
+.modal-close:hover{color:var(--white)}
+.editor{flex:1;min-height:0}
+textarea.code-area{width:100%;height:100%;min-height:380px;background:#020409;border:none;border-bottom:1px solid var(--border);color:#94a3b8;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.65;padding:14px 16px;resize:none;outline:none;tab-size:4}
+textarea.code-area:focus{background:#030611}
+.modal-footer{padding:12px 20px;display:flex;gap:10px;justify-content:flex-end}
+
+/* ── Rename/Confirm Modal ── */
+.mini-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px}
+.mini-modal.show{display:flex}
+.mini-box{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:24px;width:100%;max-width:400px}
+.mini-box h3{font-size:.88rem;margin-bottom:14px;font-weight:600}
+.mini-box input{width:100%;background:#020409;border:1px solid var(--border2);color:var(--white);padding:9px 12px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:14px;outline:none}
+.mini-box input:focus{border-color:var(--accent)}
+.mini-actions{display:flex;gap:10px;justify-content:flex-end}
+.toast{position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:4px;font-size:.75rem;font-family:'JetBrains Mono',monospace;z-index:500;transition:opacity .3s;pointer-events:none}
+.toast-ok{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:var(--green)}
+.toast-err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:var(--red)}
+</style>
+</head><body>
+<nav>
+  <div class="logo">KARL</div>
+  <a href="/dashboard" class="btn btn-outline">← Dashboard</a>
+</nav>
+<main>
+  <!-- ZIP notice -->
+  <div id="zip-notice" style="display:none" class="zip-notice">
+    <span class="zip-notice-text">📦 ZIP uploaded — extract before starting</span>
+    <button class="btn btn-accent" onclick="extractBot()">📦 Extract ZIP</button>
+  </div>
+
+  <!-- Header -->
+  <div class="bot-header">
+    <div>
+      <div class="bot-title" id="bot-name">Loading...</div>
+      <div class="bot-sub" id="bot-id">...</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span id="status-chip" class="status-chip chip-stopped">
+        <span class="status-dot dot-stopped" id="status-dot"></span>
+        <span id="status-text">Stopped</span>
+      </span>
+      <div class="actions" id="bot-actions"></div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="card">
+    <div class="card-title">Info</div>
+    <div class="info-grid">
+      <div class="info-item"><label>Bot ID</label><value id="i-id">-</value></div>
+      <div class="info-item"><label>Main File</label><value id="i-main">-</value></div>
+      <div class="info-item"><label>Status</label><value id="i-status">-</value></div>
+      <div class="info-item"><label>Uptime</label><value id="i-uptime">-</value></div>
+    </div>
+  </div>
+
+  <!-- File Manager -->
+  <div class="card">
+    <div class="card-title">
+      <span>📁 Files</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:.6rem" onclick="loadFiles()">↻ Refresh</button>
+        <button class="btn btn-accent" style="padding:4px 10px;font-size:.6rem" onclick="newFilePrompt()">+ New File</button>
+      </div>
+    </div>
+    <div id="file-list" class="file-list"><div class="fm-empty">Loading files...</div></div>
+  </div>
+
+  <!-- Logs -->
+  <div class="card">
+    <div class="card-title">
+      <span>Output Logs</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:.65rem;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;letter-spacing:0">
+          <input type="checkbox" id="auto-scroll" checked style="accent-color:var(--accent)"> Auto-scroll
+        </label>
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:.6rem" onclick="loadLogs()">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="log-box" id="log-box">Loading logs...</div>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="card">
+    <div class="card-title">Danger Zone</div>
+    <button class="btn btn-red" onclick="deleteBot()">🗑 Delete Bot</button>
+  </div>
+</main>
+
+<!-- Editor Modal -->
+<div class="modal" id="editor-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="editor-title">Editing...</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="editor-saving" style="font-size:.65rem;color:var(--muted);display:none">Saving...</span>
+        <button class="modal-close" onclick="closeEditor()">✕</button>
+      </div>
+    </div>
+    <div class="editor">
+      <textarea class="code-area" id="code-area" spellcheck="false"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEditor()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveFile()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="mini-modal" id="rename-modal">
+  <div class="mini-box">
+    <h3>Rename File</h3>
+    <input type="text" id="rename-input" placeholder="new-name.py" />
+    <div class="mini-actions">
+      <button class="btn btn-outline" onclick="closeRename()">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="mini-modal" id="del-modal">
+  <div class="mini-box">
+    <h3 id="del-title">Delete file?</h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px" id="del-sub">This cannot be undone.</p>
+    <div class="mini-actions">
+      <button class="btn btn-outline" onclick="closeDel()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmDel()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- New File Modal -->
+<div class="mini-modal" id="newfile-modal">
+  <div class="mini-box">
+    <h3>New File</h3>
+    <input type="text" id="newfile-input" placeholder="filename.py" />
+    <div class="mini-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('newfile-modal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmNewFile()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const botId = window.location.pathname.split('/').pop();
+let currentBot = null;
+let _editingPath = null;
+let _renamePath  = null;
+let _delPath     = null;
+let _pollTimer   = null;
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let _toastTimer;
+function toast(msg, ok = true) {
+  let t = document.getElementById('_toast');
+  if (!t) { t = document.createElement('div'); t.id = '_toast'; document.body.appendChild(t); }
+  t.className = 'toast ' + (ok ? 'toast-ok' : 'toast-err');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+async function init() {
+  await loadBot();
+  await loadFiles();
+  await loadLogs();
+  startPoll();
+}
+
+function startPoll() {
+  clearInterval(_pollTimer);
+  _pollTimer = setInterval(async () => {
+    await loadBot();
+    if (currentBot?.live) await loadLogs();
+  }, 4000);
+}
+
+// ── Bot info ───────────────────────────────────────────────────────────────
+async function loadBot() {
+  const r = await fetch(`/api/bots/${botId}`).then(r => r.json()).catch(() => null);
+  if (!r?.success) { window.location.href = '/dashboard'; return; }
+  const b = currentBot = r.bot;
+  document.title = `KARL — ${b.name}`;
+  document.getElementById('bot-name').textContent = b.name;
+  document.getElementById('bot-id').textContent = `ID: ${b.id} · ${b.main_file || 'main.py'}`;
+  document.getElementById('i-id').textContent = b.id;
+  document.getElementById('i-main').textContent = b.main_file || 'main.py';
+  document.getElementById('i-status').textContent = b.live ? 'Running' : b.status;
+  document.getElementById('i-uptime').textContent = b.live ? fmtUptime(b.uptime) : '—';
+
+  document.getElementById('zip-notice').style.display = b.zip_path ? 'flex' : 'none';
+
+  const chip = document.getElementById('status-chip');
+  const dot  = document.getElementById('status-dot');
+  const txt  = document.getElementById('status-text');
+  if (b.live) {
+    chip.className = 'status-chip chip-running';
+    dot.className  = 'status-dot dot-running';
+    txt.textContent = 'Running';
+  } else {
+    chip.className = 'status-chip chip-stopped';
+    dot.className  = 'status-dot dot-stopped';
+    txt.textContent = 'Stopped';
+  }
+
+  const acts = document.getElementById('bot-actions');
+  if (b.zip_path) {
+    acts.innerHTML = '';
+  } else if (b.live) {
+    acts.innerHTML = `<button class="btn btn-red" onclick="stopBot()">⏹ Stop</button>`;
+  } else {
+    acts.innerHTML = `<button class="btn btn-green" onclick="startBot()">▶ Start</button>`;
+  }
+}
+
+function fmtUptime(s) {
+  if (!s) return '0s';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h ? `${h}h ${m}m` : (m ? `${m}m ${sec}s` : `${sec}s`);
+}
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileIcon(f) {
+  if (f.isDir) return '📁';
+  const ext = f.name.split('.').pop().toLowerCase();
+  const map = { py:'🐍', js:'📜', json:'📋', txt:'📄', md:'📝', env:'🔐', cfg:'⚙️', yml:'⚙️', yaml:'⚙️', sh:'💻', log:'📃', zip:'📦', png:'🖼', jpg:'🖼', jpeg:'🖼', gif:'🖼' };
+  return map[ext] || '📄';
+}
+
+function isBinary(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return ['png','jpg','jpeg','gif','bmp','ico','svg','zip','tar','gz','exe','bin','so','dll','pyc','pyd'].includes(ext);
+}
+
+// ── File Manager ───────────────────────────────────────────────────────────
+let _files = [];
+
+async function loadFiles() {
+  const r = await fetch(`/api/bots/${botId}/files`).then(r => r.json()).catch(() => null);
+  if (!r?.success) return;
+  _files = r.files || [];
+  renderFiles();
+}
+
+function renderFiles() {
+  const list = document.getElementById('file-list');
+  if (!_files.length) {
+    list.innerHTML = '<div class="fm-empty">No files yet. Create one above.</div>';
+    return;
+  }
+  // Sort: dirs first, then by name
+  const sorted = [..._files].sort((a, b) => {
+    if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  list.innerHTML = sorted.map(f => `
+    <div class="file-row" onclick="handleFileClick(event,'${esc(f.path)}',${f.isDir})">
+      <span class="file-icon">${fileIcon(f)}</span>
+      <span class="file-name">${esc(f.path)}</span>
+      <span class="file-size">${f.isDir ? '' : fmtSize(f.size)}</span>
+      <span class="file-actions" onclick="event.stopPropagation()">
+        ${!f.isDir ? `<button class="fa-btn edit" title="Edit" onclick="openEditor('${esc(f.path)}')">✏️</button>` : ''}
+        <button class="fa-btn ren" title="Rename" onclick="openRename('${esc(f.path)}')">🔤</button>
+        <button class="fa-btn del" title="Delete" onclick="openDel('${esc(f.path)}')">🗑</button>
+      </span>
+    </div>`).join('');
+}
+
+function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+function handleFileClick(e, filePath, isDir) {
+  if (isDir) return; // could expand dir in future
+  if (!isBinary(filePath)) openEditor(filePath);
+}
+
+// ── Editor ─────────────────────────────────────────────────────────────────
+async function openEditor(filePath) {
+  _editingPath = filePath;
+  document.getElementById('editor-title').textContent = filePath;
+  document.getElementById('code-area').value = 'Loading...';
+  document.getElementById('editor-modal').classList.add('show');
+
+  const r = await fetch(`/api/bots/${botId}/file?path=${encodeURIComponent(filePath)}`).then(r => r.json()).catch(() => null);
+  if (r?.success) {
+    document.getElementById('code-area').value = r.content;
+  } else {
+    document.getElementById('code-area').value = '';
+    toast(`Could not load ${filePath}`, false);
+  }
+}
+
+function closeEditor() {
+  document.getElementById('editor-modal').classList.remove('show');
+  _editingPath = null;
+}
+
+async function saveFile() {
+  if (!_editingPath) return;
+  const content = document.getElementById('code-area').value;
+  const sav = document.getElementById('editor-saving');
+  sav.style.display = 'inline';
+  const r = await fetch(`/api/bots/${botId}/file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: _editingPath, content })
+  }).then(r => r.json()).catch(() => null);
+  sav.style.display = 'none';
+  if (r?.success) {
+    toast('✅ Saved');
+    await loadFiles();
+  } else {
+    toast('❌ Save failed: ' + (r?.message || 'unknown'), false);
+  }
+}
+
+// Ctrl+S inside editor
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 's' && _editingPath) { e.preventDefault(); saveFile(); }
+});
+
+// Tab key inside code area
+document.getElementById('code-area')?.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const s = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = s + 4;
+  }
+});
+
+// ── Rename ─────────────────────────────────────────────────────────────────
+function openRename(filePath) {
+  _renamePath = filePath;
+  document.getElementById('rename-input').value = filePath.split('/').pop();
+  document.getElementById('rename-modal').classList.add('show');
+  setTimeout(() => document.getElementById('rename-input').focus(), 50);
+}
+
+function closeRename() {
+  document.getElementById('rename-modal').classList.remove('show');
+  _renamePath = null;
+}
+
+async function confirmRename() {
+  if (!_renamePath) return;
+  const newName = document.getElementById('rename-input').value.trim();
+  if (!newName) return toast('Enter a name', false);
+  const dir = _renamePath.includes('/') ? _renamePath.split('/').slice(0, -1).join('/') + '/' : '';
+  const to  = dir + newName;
+  const r = await fetch(`/api/bots/${botId}/rename`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: _renamePath, to })
+  }).then(r => r.json()).catch(() => null);
+  closeRename();
+  if (r?.success) { toast('✅ Renamed'); await loadFiles(); }
+  else toast('❌ ' + (r?.message || 'Rename failed'), false);
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────
+function openDel(filePath) {
+  _delPath = filePath;
+  document.getElementById('del-title').textContent = `Delete "${filePath.split('/').pop()}"?`;
+  document.getElementById('del-modal').classList.add('show');
+}
+
+function closeDel() {
+  document.getElementById('del-modal').classList.remove('show');
+  _delPath = null;
+}
+
+async function confirmDel() {
+  if (!_delPath) return;
+  const r = await fetch(`/api/bots/${botId}/file?path=${encodeURIComponent(_delPath)}`, {
+    method: 'DELETE'
+  }).then(r => r.json()).catch(() => null);
+  closeDel();
+  if (r?.success) { toast('🗑 Deleted'); await loadFiles(); }
+  else toast('❌ ' + (r?.message || 'Delete failed'), false);
+}
+
+// ── New File ───────────────────────────────────────────────────────────────
+function newFilePrompt() {
+  document.getElementById('newfile-input').value = '';
+  document.getElementById('newfile-modal').classList.add('show');
+  setTimeout(() => document.getElementById('newfile-input').focus(), 50);
+}
+
+async function confirmNewFile() {
+  const name = document.getElementById('newfile-input').value.trim();
+  if (!name) return toast('Enter a filename', false);
+  document.getElementById('newfile-modal').classList.remove('show');
+  const r = await fetch(`/api/bots/${botId}/file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: name, content: '' })
+  }).then(r => r.json()).catch(() => null);
+  if (r?.success) {
+    toast('✅ Created');
+    await loadFiles();
+    openEditor(name);
+  } else {
+    toast('❌ ' + (r?.message || 'Create failed'), false);
+  }
+}
+
+// ── Logs ───────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const r = await fetch(`/api/bots/${botId}/logs`).then(r => r.json()).catch(() => null);
+  const box = document.getElementById('log-box');
+  box.textContent = r?.logs || '(no output yet)';
+  if (document.getElementById('auto-scroll').checked) box.scrollTop = box.scrollHeight;
+}
+
+// ── Bot controls ───────────────────────────────────────────────────────────
+async function startBot() {
+  const r = await fetch(`/api/bots/${botId}/start`, { method: 'POST' }).then(r => r.json()).catch(() => null);
+  if (!r?.ok && r?.error) toast('❌ ' + r.error, false);
+  setTimeout(() => { loadBot(); loadLogs(); }, 1200);
+}
+
+async function stopBot() {
+  await fetch(`/api/bots/${botId}/stop`, { method: 'POST' });
+  setTimeout(loadBot, 500);
+}
+
+async function extractBot() {
+  const btn = document.querySelector('#zip-notice .btn-accent');
+  btn.disabled = true; btn.textContent = 'Extracting...';
+  const r = await fetch(`/api/bots/${botId}/extract`, { method: 'POST' }).then(r => r.json()).catch(() => null);
+  toast(r?.success ? '✅ ' + r.message : '❌ ' + (r?.message || 'Failed'), !!r?.success);
+  loadBot(); loadFiles(); loadLogs();
+}
+
+async function deleteBot() {
+  if (!confirm('Delete this bot? All files will be removed.')) return;
+  await fetch(`/api/bots/${botId}`, { method: 'DELETE' });
+  window.location.href = '/dashboard';
+}
+
+// ── Keyboard shortcuts for modals ──────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('editor-modal').classList.contains('show')) { closeEditor(); return; }
+    if (document.getElementById('rename-modal').classList.contains('show')) { closeRename(); return; }
+    if (document.getElementById('del-modal').classList.contains('show')) { closeDel(); return; }
+    if (document.getElementById('newfile-modal').classList.contains('show')) {
+      document.getElementById('newfile-modal').classList.remove('show'); return;
+    }
+  }
+});
+document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmRename(); });
+document.getElementById('newfile-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewFile(); });
+
+init();
+</script>
+</body></html>
