@@ -1,0 +1,193 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KARL — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--surface:#0d1120;--surface2:#131829;--border:#1c2238;--border2:#252d45;--white:#eef0f7;--muted:#5a6285;--muted2:#2e3554;--accent:#f5a623;--green:#22c55e;--red:#ef4444;--yellow:#eab308}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:3px;color:var(--accent);font-size:.95rem}
+.nav-right{display:flex;align-items:center;gap:16px}
+.user-chip{font-size:.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.btn{padding:8px 16px;border-radius:3px;font-size:.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:none;font-family:'JetBrains Mono',monospace;transition:all .15s;text-decoration:none;display:inline-block}
+.btn-accent{background:var(--accent);color:#07090f}.btn-accent:hover{background:#f0b84a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-red{background:transparent;border:1px solid #ef444440;color:var(--red)}.btn-red:hover{background:#ef444420}
+.btn-green{background:transparent;border:1px solid #22c55e40;color:var(--green)}.btn-green:hover{background:#22c55e20}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:1.3rem;font-weight:600;letter-spacing:-0.5px}
+.page-sub{font-size:.75rem;color:var(--muted);margin-top:4px}
+.empty{text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:16px}
+.empty h3{font-size:1.1rem;margin-bottom:8px;color:var(--white)}
+.empty p{font-size:.82rem;line-height:1.6;margin-bottom:24px}
+.bots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.bot-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;transition:border-color .15s;cursor:pointer}
+.bot-card:hover{border-color:var(--border2)}
+.bot-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bot-name{font-weight:600;font-size:.95rem}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot-running{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-stopped{background:var(--muted2)}
+.dot-starting{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.bot-meta{font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:14px}
+.bot-actions{display:flex;gap:8px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;width:100%;max-width:460px}
+.modal-title{font-size:1.1rem;font-weight:600;margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.62rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:10px 12px;font-family:inherit;font-size:.85rem;outline:none;border-radius:3px;transition:border-color .15s}
+.field input:focus{border-color:var(--accent)}
+.field input::placeholder{color:var(--muted2)}
+.upload-area{border:2px dashed var(--border2);border-radius:4px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative}
+.upload-area:hover{border-color:var(--accent)}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-label{font-size:.78rem;color:var(--muted)}
+.upload-label strong{color:var(--accent)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.msg{padding:10px 14px;border-radius:3px;font-size:.78rem;margin-bottom:14px;border-left:2px solid;display:none}
+.msg.error{background:rgba(239,68,68,.06);border-color:var(--red);color:#fca5a5;display:block}
+.msg.success{background:rgba(34,197,94,.06);border-color:var(--green);color:#86efac;display:block}
+</style></head><body>
+<nav>
+  <div class="logo">KARL</div>
+  <div class="nav-right">
+    <span class="user-chip" id="user-chip">...</span>
+    <a href="/admin" id="admin-link" style="display:none" class="btn btn-outline">Admin</a>
+    <button onclick="doLogout()" class="btn btn-outline">Sign Out</button>
+  </div>
+</nav>
+<main>
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Bots</div>
+      <div class="page-sub">Manage and deploy your Telegram bots</div>
+    </div>
+    <button class="btn btn-accent" onclick="openCreateModal()">+ New Bot</button>
+  </div>
+  <div id="bots-container"><div class="empty"><div class="empty-icon">🤖</div><h3>No bots yet</h3><p>Upload a .py or .zip file to get started.</p><button class="btn btn-accent" onclick="openCreateModal()">Create Your First Bot</button></div></div>
+</main>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <div class="modal-title">🤖 New Bot</div>
+    <div class="msg" id="create-msg"></div>
+    <div class="field"><label>Bot Name</label><input id="c-name" placeholder="My Telegram Bot"></div>
+    <div class="upload-area" id="upload-area">
+      <input type="file" id="c-file" accept=".py,.zip" onchange="fileSelected()">
+      <div class="upload-label" id="upload-label">Drop <strong>.py</strong> or <strong>.zip</strong> here · max 65MB</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="createBot()" id="create-btn">Create Bot</button>
+      <button class="btn btn-outline" onclick="closeCreateModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let bots = [];
+
+async function init() {
+  const me = await fetch('/api/me').then(r=>r.json());
+  if (me.success) {
+    document.getElementById('user-chip').textContent = me.user.username;
+    if (me.user.is_admin) document.getElementById('admin-link').style.display='inline-block';
+  }
+  loadBots();
+}
+
+async function loadBots() {
+  const r = await fetch('/api/bots').then(r=>r.json());
+  if (!r.success) return;
+  bots = r.bots;
+  renderBots();
+}
+
+function renderBots() {
+  const c = document.getElementById('bots-container');
+  if (!bots.length) {
+    c.innerHTML = `<div class="empty"><div class="empty-icon">🤖</div><h3>No bots yet</h3><p>Upload a .py or .zip file to get started.</p><button class="btn btn-accent" onclick="openCreateModal()">Create Your First Bot</button></div>`;
+    return;
+  }
+  c.innerHTML = `<div class="bots-grid">${bots.map(b=>`
+    <div class="bot-card" onclick="openBot('${b.id}')">
+      <div class="bot-card-header">
+        <div class="bot-name">${esc(b.name)}</div>
+        <div><span class="status-dot dot-${b.live?'running':b.status==='starting'?'starting':'stopped'}"></span><span style="font-size:.7rem;color:var(--muted)">${b.live?'Running':b.status==='starting'?'Starting':'Stopped'}</span></div>
+      </div>
+      <div class="bot-meta">ID: ${b.id} · ${b.main_file||'main.py'}${b.zip_path?' · 📦 ZIP (extract first)':''}</div>
+      <div class="bot-actions" onclick="event.stopPropagation()">
+        ${b.zip_path?`<button class="btn btn-accent" onclick="extractBot('${b.id}')">📦 Extract</button>`:`
+        ${b.live?`<button class="btn btn-red" onclick="stopBot('${b.id}')">⏹ Stop</button>`:`<button class="btn btn-green" onclick="startBot('${b.id}')">▶ Start</button>`}
+        `}
+        <button class="btn btn-outline" onclick="openBot('${b.id}')">View</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function esc(s) { return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function openBot(id) { window.location.href = '/bot/' + id; }
+
+async function startBot(id) {
+  const r = await fetch(`/api/bots/${id}/start`,{method:'POST'}).then(r=>r.json());
+  if (!r.ok && r.error) alert(r.error);
+  setTimeout(loadBots, 500);
+}
+
+async function stopBot(id) {
+  await fetch(`/api/bots/${id}/stop`,{method:'POST'});
+  setTimeout(loadBots, 500);
+}
+
+async function extractBot(id) {
+  const btn = event.target;
+  btn.disabled=true; btn.textContent='Extracting...';
+  const r = await fetch(`/api/bots/${id}/extract`,{method:'POST'}).then(r=>r.json());
+  alert(r.success ? r.message : 'Error: ' + r.message);
+  loadBots();
+}
+
+function openCreateModal() { document.getElementById('create-modal').classList.add('active'); }
+function closeCreateModal() { document.getElementById('create-modal').classList.remove('active'); }
+function fileSelected() {
+  const f = document.getElementById('c-file').files[0];
+  if (f) document.getElementById('upload-label').innerHTML = `📄 <strong>${f.name}</strong> (${(f.size/1024/1024).toFixed(1)} MB)`;
+}
+
+async function createBot() {
+  const name = document.getElementById('c-name').value.trim();
+  const file = document.getElementById('c-file').files[0];
+  if (!name) { showCreateMsg('Bot name required','error'); return; }
+  const btn = document.getElementById('create-btn');
+  btn.disabled=true; btn.textContent='Creating...';
+  const fd = new FormData();
+  fd.append('name', name);
+  if (file) fd.append('bot_file', file);
+  const r = await fetch('/api/bots/create',{method:'POST',body:fd}).then(r=>r.json());
+  if (r.success) {
+    closeCreateModal();
+    if (r.hasZip) { loadBots(); showCreateMsg('Bot created! Click Extract to unpack the zip.','success'); }
+    else window.location.href = '/bot/' + r.botId;
+  } else { showCreateMsg(r.message,'error'); btn.disabled=false; btn.textContent='Create Bot'; }
+}
+
+function showCreateMsg(m,t) {
+  const el=document.getElementById('create-msg');
+  el.className='msg '+t; el.textContent=m;
+}
+
+async function doLogout() {
+  await fetch('/api/auth/logout',{method:'POST'});
+  window.location.href='/login';
+}
+
+init();
+setInterval(loadBots, 5000);
+</script>
+</body></html>

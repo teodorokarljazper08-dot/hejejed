@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KARL — Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--surface:#0d1120;--border:#1c2238;--border2:#252d45;--white:#eef0f7;--muted:#5a6285;--muted2:#2e3554;--accent:#f5a623;--green:#22c55e;--red:#ef4444}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh;display:flex}
+.left{width:320px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:40px;position:relative}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:3px;color:var(--accent)}
+.left-tagline{margin-top:auto}
+.left-big{font-size:2.2rem;font-weight:700;letter-spacing:-1.5px;line-height:1.05;margin-bottom:12px;text-transform:uppercase}
+.left-sub{font-size:.75rem;color:var(--muted);line-height:1.7;font-family:'JetBrains Mono',monospace}
+.right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px}
+.form-box{width:100%;max-width:380px}
+.tab-row{display:flex;margin-bottom:32px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 0;margin-right:24px;font-size:.68rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--white);border-bottom-color:var(--accent)}
+.form-title{font-size:1.5rem;font-weight:600;margin-bottom:6px}
+.form-sub{font-size:.78rem;color:var(--muted);margin-bottom:24px;line-height:1.5}
+.form-sub a{color:var(--accent)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.62rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--white);padding:10px 12px;font-family:inherit;font-size:.85rem;outline:none;border-radius:3px;transition:border-color .15s}
+.field input:focus{border-color:var(--accent)}
+.field input::placeholder{color:var(--muted2)}
+.token-row{display:flex;gap:6px}
+.token-row input{flex:1}
+.verify-btn{padding:10px 14px;background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:.62rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:3px;white-space:nowrap;transition:all .15s;font-family:inherit}
+.verify-btn:hover{border-color:var(--white);color:var(--white)}
+.btn-submit{width:100%;padding:12px;background:var(--accent);color:#07090f;font-weight:700;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;border-radius:3px;margin-top:4px}
+.btn-submit:hover{background:#f0b84a}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed}
+.msg{padding:10px 14px;border-radius:3px;font-size:.78rem;margin-bottom:14px;border-left:2px solid;display:none}
+.msg.error{background:rgba(239,68,68,.06);border-color:var(--red);color:#fca5a5;display:block}
+.msg.success{background:rgba(34,197,94,.06);border-color:var(--green);color:#86efac;display:block}
+.panel{display:none}.panel.active{display:block}
+.magic-link-box{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;margin-top:20px;font-size:.72rem;color:var(--muted);text-align:center}
+.magic-link-box a{color:var(--accent);text-decoration:none}
+@media(max-width:640px){.left{display:none}.right{padding:32px 20px}}
+</style></head><body>
+<div class="left">
+  <div class="logo">KARL</div>
+  <div class="left-tagline">
+    <div class="left-big">HOST<br><span style="color:var(--muted)">YOUR</span><br>BOTS.</div>
+    <div class="left-sub">Deploy Telegram bots in seconds. 24/7 uptime, real-time logs. No server knowledge required.</div>
+  </div>
+</div>
+<div class="right">
+  <div class="form-box">
+    <div class="panel active" id="panel-main">
+      <div class="tab-row">
+        <div class="tab active" id="tab-in"  onclick="switchTab('in')">Sign In</div>
+        <div class="tab"        id="tab-up"  onclick="switchTab('up')">Sign Up</div>
+      </div>
+
+      <!-- Sign In -->
+      <div id="form-in">
+        <div class="form-title">Welcome back</div>
+        <div class="form-sub">Sign in to your Karl Hosting account</div>
+        <div class="msg" id="in-msg"></div>
+        <div class="field"><label>Username</label><input id="in-user" type="text" placeholder="your username" autocomplete="username"></div>
+        <div class="field"><label>Password</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn-submit" onclick="doLogin()" id="in-btn">Sign In</button>
+        <div class="magic-link-box">
+          Or use your <a href="https://karl-hosting-production.up.railway.app/login" target="_blank">universal login link</a> →
+          <a href="https://karl-hosting-production.up.railway.app/login">karl-hosting-production.up.railway.app/login</a>
+        </div>
+      </div>
+
+      <!-- Sign Up -->
+      <div id="form-up" style="display:none">
+        <div class="form-title">Create account</div>
+        <div class="form-sub">Need a token? Get one from <a href="https://t.me/Karl08901_bot" target="_blank">@Karl08901_bot</a></div>
+        <div class="msg" id="up-msg"></div>
+        <div class="field"><label>Activation Token</label>
+          <div class="token-row">
+            <input id="up-token" type="text" placeholder="KARL-XXXXXXXXXXXXXXXX" oninput="this.value=this.value.toUpperCase()">
+            <button class="verify-btn" onclick="verifyToken()">Verify</button>
+          </div>
+        </div>
+        <div class="field"><label>Username</label><input id="up-user" type="text" placeholder="choose a username"></div>
+        <div class="field"><label>Password</label><input id="up-pass" type="password" placeholder="min 6 characters"></div>
+        <button class="btn-submit" onclick="doRegister()" id="up-btn">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function switchTab(t) {
+  document.getElementById('form-in').style.display = t==='in'?'block':'none';
+  document.getElementById('form-up').style.display = t==='up'?'block':'none';
+  document.getElementById('tab-in').className = 'tab'+(t==='in'?' active':'');
+  document.getElementById('tab-up').className = 'tab'+(t==='up'?' active':'');
+  // Auto-switch based on URL
+  if(t==='up' && window.location.pathname==='/register') {}
+}
+// Auto-open register tab
+if(window.location.pathname==='/register') switchTab('up');
+
+function showMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.className = 'msg ' + type;
+  el.textContent = msg;
+}
+
+async function doLogin() {
+  const btn = document.getElementById('in-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const r = await fetch('/api/auth/login', {method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username: document.getElementById('in-user').value, password: document.getElementById('in-pass').value })});
+    const d = await r.json();
+    if (d.success) { window.location.href = d.redirect || '/dashboard'; }
+    else { showMsg('in-msg', d.message, 'error'); btn.disabled=false; btn.textContent='Sign In'; }
+  } catch { showMsg('in-msg','Network error','error'); btn.disabled=false; btn.textContent='Sign In'; }
+}
+
+async function verifyToken() {
+  const t = document.getElementById('up-token').value.trim();
+  if (!t) return;
+  const r = await fetch('/api/auth/check-token?token=' + encodeURIComponent(t));
+  const d = await r.json();
+  showMsg('up-msg', d.message, d.valid ? 'success' : 'error');
+}
+
+async function doRegister() {
+  const btn = document.getElementById('up-btn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  try {
+    const r = await fetch('/api/auth/register', {method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token: document.getElementById('up-token').value, username: document.getElementById('up-user').value, password: document.getElementById('up-pass').value })});
+    const d = await r.json();
+    if (d.success) { window.location.href = d.redirect || '/dashboard'; }
+    else { showMsg('up-msg', d.message, 'error'); btn.disabled=false; btn.textContent='Create Account'; }
+  } catch { showMsg('up-msg','Network error','error'); btn.disabled=false; btn.textContent='Create Account'; }
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Enter') { if(document.getElementById('form-in').style.display!=='none') doLogin(); else doRegister(); } });
+</script>
+</body></html>
