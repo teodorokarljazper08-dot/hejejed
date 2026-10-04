@@ -1,7 +1,18 @@
-[build]
-builder = "nixpacks"
+[phases.setup]
+nixPkgs = [
+  "nodejs_20",
+  "python312",
+  "python312Packages.pip",
+  "python312Packages.setuptools",
+  "gcc",
+  "gnumake",
+  "pkg-config"
+]
 
-[deploy]
-startCommand = "node server.js"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 10
+[phases.build]
+cmds = [
+  "npm install --build-from-source"
+]
+
+[start]
+cmd = "node server.js"
