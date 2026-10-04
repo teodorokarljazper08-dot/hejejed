@@ -156,22 +156,6 @@ router.delete('/:id', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-// GET /api/bots/:id/files
-router.get('/:id/files', requireAuth, (req, res) => {
-  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-  if (!bot) return res.json({ success: false, message: 'Bot not found' });
-  const botDir = engine.getBotDir(bot.id);
-  try {
-    const files = fs.readdirSync(botDir)
-      .filter(f => !f.startsWith('.'))
-      .map(f => {
-        const stat = fs.statSync(path.join(botDir, f));
-        return { name: f, size: stat.size, isDir: stat.isDirectory() };
-      });
-    res.json({ success: true, files });
-  } catch { res.json({ success: true, files: [] }); }
-});
-
 // ── File manager helpers ──────────────────────────────────────────────────────
 function safeInBot(botDir, relPath) {
   // Prevent path traversal — ensure resolved path stays inside botDir
@@ -276,4 +260,5 @@ router.post('/:id/rename', requireAuth, express.json(), (req, res) => {
 });
 
 module.exports = router;
-            
+
+           
