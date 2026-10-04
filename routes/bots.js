@@ -172,4 +172,108 @@ router.get('/:id/files', requireAuth, (req, res) => {
   } catch { res.json({ success: true, files: [] }); }
 });
 
+// ── File manager helpers ──────────────────────────────────────────────────────
+function safeInBot(botDir, relPath) {
+  // Prevent path traversal — ensure resolved path stays inside botDir
+  const resolved = path.resolve(botDir, relPath);
+  if (!resolved.startsWith(path.resolve(botDir))) return null;
+  return resolved;
+}
+
+// GET /api/bots/:id/files          — list all files (recursive)
+router.get('/:id/files', requireAuth, (req, res) => {
+  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!bot) return res.json({ success: false, message: 'Bot not found' });
+  const botDir = engine.getBotDir(bot.id);
+
+  function walk(dir, base = '') {
+    let results = [];
+    let entries;
+    try { entries = fs.readdirSync(dir); } catch { return results; }
+    for (const f of entries) {
+      if (f.startsWith('.') || f === 'output.log') continue;
+      const full = path.join(dir, f);
+      const rel  = base ? `${base}/${f}` : f;
+      const stat = fs.statSync(full);
+      if (stat.isDirectory()) {
+        results.push({ name: f, path: rel, isDir: true, size: 0 });
+        results = results.concat(walk(full, rel));
+      } else {
+        results.push({ name: f, path: rel, isDir: false, size: stat.size });
+      }
+    }
+    return results;
+  }
+
+  res.json({ success: true, files: walk(botDir) });
+});
+
+// GET /api/bots/:id/file?path=...  — read file content
+router.get('/:id/file', requireAuth, (req, res) => {
+  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!bot) return res.json({ success: false, message: 'Bot not found' });
+  const botDir = engine.getBotDir(bot.id);
+  const target = safeInBot(botDir, req.query.path || '');
+  if (!target) return res.json({ success: false, message: 'Invalid path' });
+  if (!fs.existsSync(target) || fs.statSync(target).isDirectory())
+    return res.json({ success: false, message: 'File not found' });
+  try {
+    const content = fs.readFileSync(target, 'utf8');
+    res.json({ success: true, content });
+  } catch (e) {
+    res.json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/bots/:id/file          — write / create file  { path, content }
+router.post('/:id/file', requireAuth, express.json(), (req, res) => {
+  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!bot) return res.json({ success: false, message: 'Bot not found' });
+  const botDir = engine.getBotDir(bot.id);
+  const target = safeInBot(botDir, req.body.path || '');
+  if (!target) return res.json({ success: false, message: 'Invalid path' });
+  try {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, req.body.content ?? '', 'utf8');
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, message: e.message });
+  }
+});
+
+// DELETE /api/bots/:id/file?path=... — delete a file
+router.delete('/:id/file', requireAuth, (req, res) => {
+  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!bot) return res.json({ success: false, message: 'Bot not found' });
+  const botDir = engine.getBotDir(bot.id);
+  const target = safeInBot(botDir, req.query.path || '');
+  if (!target) return res.json({ success: false, message: 'Invalid path' });
+  try {
+    fs.rmSync(target, { recursive: true, force: true });
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/bots/:id/rename        — rename / move  { from, to }
+router.post('/:id/rename', requireAuth, express.json(), (req, res) => {
+  const bot = db.prepare('SELECT * FROM bots WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!bot) return res.json({ success: false, message: 'Bot not found' });
+  const botDir = engine.getBotDir(bot.id);
+  const from = safeInBot(botDir, req.body.from || '');
+  const to   = safeInBot(botDir, req.body.to   || '');
+  if (!from || !to) return res.json({ success: false, message: 'Invalid path' });
+  if (!fs.existsSync(from)) return res.json({ success: false, message: 'Source not found' });
+  if (fs.existsSync(to))    return res.json({ success: false, message: 'Destination already exists' });
+  try {
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.renameSync(from, to);
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, message: e.message });
+  }
+});
+
 module.exports = router;
+            
