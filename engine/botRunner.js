@@ -18,7 +18,7 @@ function getBotDir(botId) {
 function getLogPath(botId) { return path.join(getBotDir(botId), 'output.log'); }
 
 function log(botId, msg) {
-  const ts = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const ts = new Date().toLocaleTimeString('en-US', { hour12: true });
   const line = `[${ts}] ${msg}\n`;
   try { fs.appendFileSync(getLogPath(botId), line); } catch {}
 }
@@ -36,14 +36,75 @@ function getStartedAt(botId) {
 
 // ── Find a working Python 3 binary ────────────────────────────────────────────
 function findPython() {
-  const candidates = ['python3', 'python3.12', 'python3.11', 'python3.10', 'python3.9', 'python'];
+  // On Railway nixpacks, python3 is in /nix/store but pip lives separately.
+  // We need a python3 that has pip bundled — check pip first.
+  const { execSync } = require('child_process');
+
+  // 1. Try to find python3 that has pip working
+  const candidates = ['python3', 'python3.12', 'python3.11', 'python3.10', 'python'];
   for (const bin of candidates) {
     try {
-      const r = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 5000 });
+      const r = spawnSync(bin, ['-m', 'pip', '--version'], { encoding: 'utf8', timeout: 5000 });
+      if (r.status === 0) return bin; // this python has pip — use it
+    } catch {}
+  }
+
+  // 2. Try to find pip3/pip directly and get the python it belongs to
+  try {
+    const pipPath = execSync('which pip3 || which pip || find /usr -name pip3 -type f 2>/dev/null | head -1', { encoding: 'utf8', timeout: 5000 }).trim();
+    if (pipPath) {
+      // Get the python associated with this pip
+      const pyPath = pipPath.replace('/pip3','').replace('/pip','') + '/python3';
+      const r = spawnSync(pyPath, ['--version'], { encoding: 'utf8', timeout: 3000 });
+      if (r.status === 0) return pyPath;
+    }
+  } catch {}
+
+  // 3. Search nix store for a python3 with pip
+  try {
+    const found = execSync(
+      'find /nix/store -maxdepth 4 -name "python3*" -type f 2>/dev/null | head -5',
+      { encoding: 'utf8', timeout: 5000 }
+    ).trim().split('\n');
+    for (const bin of found) {
+      if (!bin) continue;
+      const r = spawnSync(bin, ['-m', 'pip', '--version'], { encoding: 'utf8', timeout: 3000 });
+      if (r.status === 0) return bin;
+    }
+  } catch {}
+
+  // 4. Last resort — use python3 even without pip (bot may still run if no requirements)
+  for (const bin of candidates) {
+    try {
+      const r = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 3000 });
       if (r.status === 0 && (r.stdout + r.stderr).includes('Python 3')) return bin;
     } catch {}
   }
-  return 'python3'; // fallback — let it fail loudly in the log
+  return 'python3';
+}
+
+// ── Find pip binary directly (fallback when -m pip fails) ─────────────────────
+function findPip() {
+  const { execSync } = require('child_process');
+  const candidates = ['pip3', 'pip', 'pip3.12', 'pip3.11', 'pip3.10'];
+  for (const bin of candidates) {
+    try {
+      const r = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 3000 });
+      if (r.status === 0) return bin;
+    } catch {}
+  }
+  try {
+    const found = execSync(
+      'find /nix/store -maxdepth 5 -name "pip3" -type f 2>/dev/null | head -3',
+      { encoding: 'utf8', timeout: 5000 }
+    ).trim().split('\n');
+    for (const bin of found) {
+      if (!bin) continue;
+      const r = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 3000 });
+      if (r.status === 0) return bin;
+    }
+  } catch {}
+  return null;
 }
 
 // ── Install requirements synchronously (blocks until done) ───────────────────
@@ -55,42 +116,47 @@ function installRequirements(botId, botDir, pythonBin) {
 
   // Try: python3 -m pip install ... --break-system-packages
   // Then retry without --break-system-packages (older pip / venv envs)
-  const pipArgs = [
-    ['-m', 'pip', 'install', '-r', reqPath, '--break-system-packages', '--quiet', '--no-warn-script-location'],
-    ['-m', 'pip', 'install', '-r', reqPath, '--quiet', '--no-warn-script-location'],
-    ['-m', 'pip', 'install', '-r', reqPath, '--user', '--quiet', '--no-warn-script-location'],
+  const ENV = {
+    ...process.env,
+    HOME: botDir,
+    PYTHONUNBUFFERED: '1',
+    PIP_DISABLE_PIP_VERSION_CHECK: '1',
+    PIP_NO_COLOR: '1',
+  };
+  const OPTS = { cwd: botDir, encoding: 'utf8', timeout: 300_000, env: ENV };
+
+  // Build list of install attempts:
+  // [binary, args[]]
+  const attempts = [
+    [pythonBin, ['-m', 'pip', 'install', '-r', reqPath, '--break-system-packages', '-q', '--no-warn-script-location']],
+    [pythonBin, ['-m', 'pip', 'install', '-r', reqPath, '-q', '--no-warn-script-location']],
+    [pythonBin, ['-m', 'pip', 'install', '-r', reqPath, '--user', '-q', '--no-warn-script-location']],
   ];
 
-  for (const args of pipArgs) {
-    try {
-      const r = spawnSync(pythonBin, args, {
-        cwd: botDir,
-        encoding: 'utf8',
-        timeout: 300_000,  // 5 min — large deps like torch can take time
-        env: {
-          ...process.env,
-          HOME: botDir,
-          PYTHONUNBUFFERED: '1',
-          PIP_DISABLE_PIP_VERSION_CHECK: '1',
-          PIP_NO_COLOR: '1',
-        }
-      });
+  // Also try direct pip binary if found
+  const pipBin = findPip();
+  if (pipBin) {
+    attempts.push([pipBin, ['install', '-r', reqPath, '--break-system-packages', '-q']]);
+    attempts.push([pipBin, ['install', '-r', reqPath, '-q']]);
+  }
 
+  for (const [bin, args] of attempts) {
+    try {
+      log(botId, `[PIP] Trying: ${bin} ${args.slice(0,2).join(' ')} ...`);
+      const r = spawnSync(bin, args, OPTS);
       const out = ((r.stdout || '') + (r.stderr || '')).trim();
       if (out) out.split('\n').forEach(l => { if (l.trim()) log(botId, `[PIP] ${l}`); });
-
       if (r.status === 0) {
         log(botId, '[PIP] ✅ Requirements installed successfully.');
         return true;
       }
-
-      log(botId, `[PIP] Attempt failed (exit ${r.status}), trying fallback...`);
+      log(botId, `[PIP] Attempt failed (exit ${r.status}), trying next...`);
     } catch (e) {
       log(botId, `[PIP] Error: ${e.message}`);
     }
   }
 
-  log(botId, '[PIP] ⚠️ Could not install all requirements — starting bot anyway.');
+  log(botId, '[PIP] ⚠️ Could not install requirements — starting bot anyway.');
   return false;
 }
 
@@ -177,3 +243,4 @@ function getLogs(botId, lines = 300) {
 function getBotDir2(botId) { return getBotDir(botId); }
 
 module.exports = { startBot, stopBot, isRunning, getStartedAt, getLogs, getBotDir: getBotDir2 };
+  
