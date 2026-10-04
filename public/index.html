@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karl Hosting — Host Your Bots</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--surface:#0d1120;--border:#1c2238;--white:#eef0f7;--muted:#5a6285;--accent:#f5a623}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;border-bottom:1px solid var(--border)}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;letter-spacing:3px;color:var(--accent)}
+.nav-links{display:flex;gap:16px}
+.btn{padding:9px 20px;border-radius:4px;font-size:.75rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border:1px solid var(--accent);color:#07090f}
+.btn-primary:hover{background:#f0b84a}
+.hero{text-align:center;padding:100px 40px 60px}
+.hero-title{font-size:clamp(2.5rem,6vw,5rem);font-weight:700;letter-spacing:-2px;line-height:1.05;margin-bottom:20px}
+.hero-title span{color:var(--accent)}
+.hero-sub{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 40px;line-height:1.7;font-family:'JetBrains Mono',monospace}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.stats{display:flex;justify-content:center;gap:60px;padding:60px 40px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stat-num{font-size:2.5rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.stat-lbl{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:60px 40px;max-width:1000px;margin:0 auto}
+.feat{background:var(--surface);border:1px solid var(--border);padding:28px;border-radius:6px}
+.feat-icon{font-size:1.8rem;margin-bottom:14px}
+.feat-title{font-weight:600;margin-bottom:8px}
+.feat-desc{font-size:.8rem;color:var(--muted);line-height:1.6}
+footer{text-align:center;padding:40px;color:var(--muted);font-size:.75rem;border-top:1px solid var(--border)}
+footer a{color:var(--accent);text-decoration:none}
+</style></head><body>
+<nav>
+  <div class="logo">KARL</div>
+  <div class="nav-links">
+    <a href="/login" class="btn btn-outline">Sign In</a>
+    <a href="/register" class="btn btn-primary">Get Started</a>
+  </div>
+</nav>
+<div class="hero">
+  <div class="hero-title">HOST YOUR<br><span>BOTS.</span></div>
+  <div class="hero-sub">Deploy Telegram bots in seconds. 24/7 uptime, real-time logs, instant deploys.</div>
+  <div class="hero-btns">
+    <a href="/register" class="btn btn-primary" style="font-size:.8rem;padding:14px 32px">START FREE</a>
+    <a href="/login" class="btn btn-outline" style="font-size:.8rem;padding:14px 32px">SIGN IN</a>
+  </div>
+</div>
+<div class="stats">
+  <div style="text-align:center"><div class="stat-num">99.9%</div><div class="stat-lbl">Uptime SLA</div></div>
+  <div style="text-align:center"><div class="stat-num">&lt;30s</div><div class="stat-lbl">Deploy Time</div></div>
+  <div style="text-align:center"><div class="stat-num">24/7</div><div class="stat-lbl">Support</div></div>
+</div>
+<div class="features">
+  <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">Instant Deploy</div><div class="feat-desc">Upload your .py or .zip file and start in seconds.</div></div>
+  <div class="feat"><div class="feat-icon">📋</div><div class="feat-title">Real-time Logs</div><div class="feat-desc">Watch your bot's output live as it runs.</div></div>
+  <div class="feat"><div class="feat-icon">🔄</div><div class="feat-title">Auto Restart</div><div class="feat-desc">Bot crashes? It restarts automatically.</div></div>
+  <div class="feat"><div class="feat-icon">📦</div><div class="feat-title">ZIP Support</div><div class="feat-desc">Upload a zip, extract with one click, start running.</div></div>
+  <div class="feat"><div class="feat-icon">🔑</div><div class="feat-title">Token System</div><div class="feat-desc">Secure activation tokens via @Karl08901_bot.</div></div>
+  <div class="feat"><div class="feat-icon">🛡️</div><div class="feat-title">Admin Panel</div><div class="feat-desc">Full user management, ban, token generation.</div></div>
+</div>
+<footer>
+  <p>Powered by <a href="https://t.me/Karl08901_bot" target="_blank">@Karl08901</a> · Karl Hosting v3.0</p>
+  <p style="margin-top:8px">Get your activation token → <a href="https://t.me/Karl08901_bot" target="_blank">@Karl08901_bot</a></p>
+</footer>
+</body></html>
+  
