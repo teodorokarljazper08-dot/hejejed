@@ -5,7 +5,6 @@ const db = require('../database');
 const { requireAuth, requireGuest } = require('../middleware/auth');
 const router = express.Router();
 
-// Login
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.json({ success: false, message: 'Username and password required' });
@@ -17,7 +16,6 @@ router.post('/login', (req, res) => {
   req.session.save(() => res.json({ success: true, redirect: '/dashboard' }));
 });
 
-// Register
 router.post('/register', (req, res) => {
   const { username, password, token } = req.body;
   if (!username || !password || !token)
@@ -29,42 +27,4 @@ router.post('/register', (req, res) => {
 
   const tk = db.prepare('SELECT * FROM activation_tokens WHERE token = ? AND used_by IS NULL').get(token.trim().toUpperCase());
   if (!tk) return res.json({ success: false, message: 'Invalid or already used activation token' });
-
-  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username.trim());
-  if (existing) return res.json({ success: false, message: 'Username already taken' });
-
-  const hashed = bcrypt.hashSync(password, 12);
-  const info = db.prepare('INSERT INTO users (username, password, role, plan) VALUES (?, ?, ?, ?)').run(username.trim(), hashed, 'user', 'free');
-  db.prepare('UPDATE activation_tokens SET used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?').run(info.lastInsertRowid, tk.id);
-  req.session.userId = info.lastInsertRowid;
-  req.session.save(() => res.json({ success: true, redirect: '/dashboard' }));
-});
-
-// Logout
-router.post('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true, redirect: '/login' }));
-});
-
-// Magic login link
-router.get('/magic', (req, res) => {
-  const { t } = req.query;
-  if (!t) return res.redirect('/login?error=invalid');
-  const link = db.prepare('SELECT * FROM login_links WHERE token = ? AND used = 0 AND expires_at > CURRENT_TIMESTAMP').get(t);
-  if (!link) return res.redirect('/login?error=expired');
-  db.prepare('UPDATE login_links SET used = 1 WHERE id = ?').run(link.id);
-  req.session.userId = link.user_id;
-  req.session.save(() => res.redirect('/dashboard'));
-});
-
-// Check token validity
-router.get('/check-token', (req, res) => {
-  const token = String(req.query.token || '').trim().toUpperCase();
-  if (!token) return res.json({ valid: false, message: 'No token provided' });
-  const row = db.prepare('SELECT used_by FROM activation_tokens WHERE token = ?').get(token);
-  if (!row) return res.json({ valid: false, message: 'Token not found' });
-  if (row.used_by) return res.json({ valid: false, message: 'Token already used' });
-  return res.json({ valid: true, message: 'Token is valid ✓' });
-});
-
-module.exports = router;
-      
+  
