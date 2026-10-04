@@ -18,7 +18,7 @@ function getBotDir(botId) {
 function getLogPath(botId) { return path.join(getBotDir(botId), 'output.log'); }
 
 function log(botId, msg) {
-  const ts = new Date().toLocaleTimeString('en-US', { hour12: true });
+  const ts = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const line = `[${ts}] ${msg}\n`;
   try { fs.appendFileSync(getLogPath(botId), line); } catch {}
 }
