@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[[volumes]]
+mountPath = "/data"
+
+[deploy.environmentVariables]
+DATA_DIR = "/data"
