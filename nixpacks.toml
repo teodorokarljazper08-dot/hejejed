@@ -1,6 +1,6 @@
 [phases.setup]
 nixPkgs = [
-  "nodejs_20",
+  "nodejs_22",
   "python312",
   "python312Packages.pip",
   "python312Packages.setuptools",
@@ -11,7 +11,7 @@ nixPkgs = [
 
 [phases.build]
 cmds = [
-  "npm install --build-from-source"
+  "npm ci --omit=dev --no-audit --no-fund"
 ]
 
 [start]
