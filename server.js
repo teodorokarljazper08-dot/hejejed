@@ -14,7 +14,7 @@ const adminRoutes = require('./routes/admin');
 const telegramBot = require('./bot/telegram');
 
 const app  = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 if (!process.env.SESSION_SECRET) {
   console.warn('[KARL] WARNING: SESSION_SECRET not set. Sessions will not persist across restarts. Set this env var in Railway.');
